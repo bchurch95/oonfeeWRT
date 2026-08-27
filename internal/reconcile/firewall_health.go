@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -1082,10 +1083,7 @@ func sortedTrueKeys(values map[string]bool) []string {
 }
 
 func sortedServiceKeys(values map[string]firewallService) []string {
-	out := make([]string, 0, len(values))
-	for value := range values {
-		out = append(out, value)
-	}
+	out := maps.Keys(values)
 	sort.Strings(out)
 	return out
 }
