@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -45,11 +46,33 @@ func runFirmwareBuild(ctx context.Context, job *firmwareJob) {
 	job.Status = "running"
 	job.Log = append(job.Log, "Starting Image Builder...")
 
-	// Example command – replace with your actual build wrapper
-	cmd := exec.CommandContext(ctx, "bash", "-c",
-		"cd deploy/openwrt-imagebuilder && ./build.sh openwrt-imagebuilder-25.05-ramips-mt7621.Linux-x86_64.tar.bz2 Linksys_WRT3200ACM")
+	// Paths – adapt to your server layout
+	baseDir := "deploy/openwrt-imagebuilder"
+	version := "25.05"
+	target := job.Target
+	profile := job.Profile
 
-	// Capture output
+	// Build directory
+	buildDir := fmt.Sprintf("%s/openwrt-imagebuilder-%s-%s.Linux-x86_64", baseDir, version, target)
+	tarball := fmt.Sprintf("%s/openwrt-imagebuilder-%s-%s.Linux-x86_64.tar.bz2", baseDir, version, target)
+
+	// Ensure Image Builder is present
+	if _, err := os.Stat(buildDir); os.IsNotExist(err) {
+		job.Log = append(job.Log, fmt.Sprintf("Downloading Image Builder for %s...", target))
+		downloadURL := fmt.Sprintf("https://downloads.openwrt.org/releases/%s/targets/%s/openwrt-imagebuilder-%s-%s.Linux-x86_64.tar.bz2", version, target, version, target)
+		cmd := exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf("cd %s && wget -q %s -O %s && tar xf %s", baseDir, downloadURL, tarball, tarball))
+		if out, err := cmd.CombinedOutput(); err != nil {
+			job.Status = "error"
+			job.Log = append(job.Log, fmt.Sprintf("Download failed: %v", err))
+			job.Log = append(job.Log, string(out))
+			return
+		}
+	}
+
+	packages := "rpcd rpcd-mod-file rpcd-mod-iwinfo rpcd-mod-luci uhttpd uhttpd-mod-ubus lldpd nlbwmon vnstat2 dropbear"
+	cmd := exec.CommandContext(ctx, "bash", "-c",
+		fmt.Sprintf("cd %s && make image PROFILE=%s PACKAGES=\"%s\" FILES=\"../files\" CONFIG_FILE=\"../openwrt.config\"", buildDir, profile, packages))
+
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		job.Status = "error"
