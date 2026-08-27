@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"maps"
+	"slices"
 	"net/http"
 	"sort"
 	"strings"
@@ -185,7 +186,7 @@ func (s *Server) infrastructureMACs(devices []*store.Device) []string {
 			}
 		}
 	}
-	out := maps.Keys(seen)
+	out := slices.Collect(maps.Keys(seen))
 	sort.Strings(out)
 	return out
 }

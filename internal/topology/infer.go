@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -651,7 +652,7 @@ func edgeSortKey(edge model.TopologyEdge) string {
 }
 
 func sortedSet(set map[string]bool) []string {
-	out := maps.Keys(set)
+	out := slices.Collect(maps.Keys(set))
 	sort.Strings(out)
 	return out
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"slices"
 	"net/netip"
 	"sort"
 	"strconv"
@@ -31,7 +32,7 @@ func managedFirewallPolicyExpectation(sectionType string, values map[string]stri
 }
 
 func sortedPolicyKeys(values map[string]firewallPolicyExpectation) []string {
-	out := maps.Keys(values)
+	out := slices.Collect(maps.Keys(values))
 	sort.Strings(out)
 	return out
 }

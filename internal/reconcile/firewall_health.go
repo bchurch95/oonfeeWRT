@@ -1073,7 +1073,7 @@ func nftScalar(raw json.RawMessage) string {
 }
 
 func sortedTrueKeys(values map[string]bool) []string {
-	keys := maps.Keys(values)
+	keys := slices.Collect(maps.Keys(values))
 	filtered := slices.DeleteFunc(keys, func(k string) bool {
 		return !values[k] || k == ""
 	})
@@ -1082,7 +1082,7 @@ func sortedTrueKeys(values map[string]bool) []string {
 }
 
 func sortedServiceKeys(values map[string]firewallService) []string {
-	out := maps.Keys(values)
+	out := slices.Collect(maps.Keys(values))
 	sort.Strings(out)
 	return out
 }

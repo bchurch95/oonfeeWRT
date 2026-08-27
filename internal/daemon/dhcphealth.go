@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"net"
 	"net/netip"
 	"path"
@@ -89,7 +90,7 @@ func ownedInterfacesForPlan(plan *reconcile.DevicePlan) []string {
 			}
 		}
 	}
-	out := maps.Keys(required)
+	out := slices.Collect(maps.Keys(required))
 	sort.Strings(out)
 	return out
 }

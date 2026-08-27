@@ -5,6 +5,7 @@ import (
 	"maps"
 	"net"
 	"net/netip"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -128,7 +129,7 @@ func CanonicalProtocols(in []string) []string {
 	if seen["all"] {
 		return []string{"all"}
 	}
-	out := maps.Keys(seen)
+	out := slices.Collect(maps.Keys(seen))
 	sort.Strings(out)
 	return out
 }
@@ -142,7 +143,7 @@ func CanonicalMACs(in []string) ([]string, error) {
 		}
 		seen[strings.ToLower(hw.String())] = true
 	}
-	out := maps.Keys(seen)
+	out := slices.Collect(maps.Keys(seen))
 	sort.Strings(out)
 	return out, nil
 }

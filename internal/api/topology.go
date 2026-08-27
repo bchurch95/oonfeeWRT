@@ -334,7 +334,7 @@ func uniqueTopologyStrings(values []string) []string {
 			set[value] = true
 		}
 	}
-	out := maps.Keys(set)
+	out := slices.Collect(maps.Keys(set))
 	sort.Strings(out)
 	return out
 }

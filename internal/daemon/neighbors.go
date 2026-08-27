@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"sort"
 	"time"
 
@@ -554,7 +555,7 @@ func (d *Daemon) noteExternalRequests(deviceID int64, c *ubus.Client) {
 }
 
 func sortedKeys(m map[string]bool) []string {
-	out := maps.Keys(m)
+	out := slices.Collect(maps.Keys(m))
 	sort.Strings(out)
 	return out
 }
