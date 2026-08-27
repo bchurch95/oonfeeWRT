@@ -51,6 +51,8 @@ export default function FirmwareBuilder() {
             <option value="TL-WDR4300">TP-Link Archer C6 v2</option>
             <option value="Netgear_R7800">Netgear R7800</option>
             <option value="Xiaomi_AX6000">Xiaomi AX6000</option>
+            <option value="Aerohive_330">Aerohive AP330</option>
+            <option value="Cisco_MR42">Cisco Meraki MR42</option>
           </select>
         </label>
       </div>
