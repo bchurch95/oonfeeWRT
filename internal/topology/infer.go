@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -650,10 +651,7 @@ func edgeSortKey(edge model.TopologyEdge) string {
 }
 
 func sortedSet(set map[string]bool) []string {
-	out := make([]string, 0, len(set))
-	for value := range set {
-		out = append(out, value)
-	}
+	out := maps.Keys(set)
 	sort.Strings(out)
 	return out
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"slices"
@@ -333,10 +334,7 @@ func uniqueTopologyStrings(values []string) []string {
 			set[value] = true
 		}
 	}
-	out := make([]string, 0, len(set))
-	for value := range set {
-		out = append(out, value)
-	}
+	out := maps.Keys(set)
 	sort.Strings(out)
 	return out
 }
