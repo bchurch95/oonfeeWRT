@@ -3,6 +3,7 @@ package reconcile
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/netip"
 	"sort"
 	"strconv"
@@ -30,10 +31,7 @@ func managedFirewallPolicyExpectation(sectionType string, values map[string]stri
 }
 
 func sortedPolicyKeys(values map[string]firewallPolicyExpectation) []string {
-	out := make([]string, 0, len(values))
-	for key := range values {
-		out = append(out, key)
-	}
+	out := maps.Keys(values)
 	sort.Strings(out)
 	return out
 }
