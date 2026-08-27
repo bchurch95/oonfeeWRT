@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, Button } from "../components/ui";
+import { api } from "../lib/api";
 
 export default function FirmwareBuilder() {
   const [building, setBuilding] = useState(false);
@@ -8,11 +9,18 @@ export default function FirmwareBuilder() {
   const startBuild = async () => {
     setBuilding(true);
     setLog("Starting OpenWrt Image Builder...\n");
-    // Placeholder – in production this would call a backend job API
-    setTimeout(() => {
-      setLog((l) => l + "Downloaded Image Builder\nmake image completed\nArtifacts ready for download");
+    try {
+      const res = await api.post("/api/v1/firmware/build", { target: "ramips-mt7621", profile: "Linksys_WRT3200ACM" });
+      setLog((l) => l + `Job ${res.job_id} queued with status ${res.status}\n`);
+      // Poll placeholder
+      setTimeout(() => {
+        setLog((l) => l + "Downloaded Image Builder\nmake image completed\nArtifacts ready for download");
+        setBuilding(false);
+      }, 2000);
+    } catch (e) {
+      setLog((l) => l + `Error: ${e}\n`);
       setBuilding(false);
-    }, 2000);
+    }
   };
 
   const flash = () => {
