@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"maps"
-t"slices"
+"slices"
 	"testing"
 	"time"
 
@@ -216,5 +216,5 @@ func TestLiveStationsPreservesOneMACOnCompetingBSSes(t *testing.T) {
 }
 
 func keysOf(m map[string]LiveStation) []string {
-	return maps.Keys(m)
+	return slices.Collect(maps.Keys(m))
 }

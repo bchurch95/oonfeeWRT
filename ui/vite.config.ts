@@ -14,7 +14,18 @@ export default defineConfig({
   },
   server: {
     // `npm run dev` talks to a locally running daemon.
-    proxy: { '/api': 'http://127.0.0.1:8080' },
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.removeHeader('origin');
+            proxyReq.removeHeader('referer');
+          });
+        },
+      }
+    },
   },
   test: {
     // happy-dom rather than jsdom: same job, materially smaller dependency

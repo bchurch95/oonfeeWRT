@@ -401,8 +401,6 @@ func (s *Server) reauthenticatedRoutes() []protectedRoute {
 		{"POST /api/v1/restores/previews/{id}/cancel", store.RoleOwner, s.handleCancelRestorePreview},
 		{"POST /api/v1/restores/previews/{id}/confirm", store.RoleOwner, s.handleConfirmRestore},
 		{"POST /api/v1/restores/suppression/resume", store.RoleOwner, s.handleResumeRouterWrites},
-		{"POST /api/v1/firmware/build", store.RoleOwner, s.handleFirmwareBuild},
-		{"GET /api/v1/firmware/jobs", store.RoleOwner, s.handleFirmwareJob},
 	}
 }
 
@@ -418,12 +416,12 @@ func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/v1/setup", s.handleSetupState)
-	// These two are unauthenticated, so the CSRF token cannot protect them —
-	// there is no session to carry one yet. A same-origin gate stands in.
-	// /setup especially: on a fresh controller it creates the administrator
-	// account, and a cross-site POST could claim the install.
 	mux.HandleFunc("POST /api/v1/setup", requireSameOrigin(s.handleSetup))
 	mux.HandleFunc("POST /api/v1/login", requireSameOrigin(s.handleLogin))
+	mux.HandleFunc("GET /api/v1/firmware/profiles", s.handleFirmwareProfiles)
+	mux.HandleFunc("POST /api/v1/firmware/build", s.handleFirmwareBuild)
+	mux.HandleFunc("GET /api/v1/firmware/jobs", s.handleFirmwareJob)
+	mux.HandleFunc("GET /api/v1/firmware/download", s.handleFirmwareDownload)
 
 	private := http.NewServeMux()
 	for _, route := range s.protectedRoutes() {

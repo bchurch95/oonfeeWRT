@@ -117,7 +117,7 @@ async function request<T>(
 }
 
 const get = <T>(path: string) => request<T>(path)
-const post = <T>(path: string, body?: unknown) =>
+export const post = <T>(path: string, body?: unknown) =>
   request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined })
 const postRaw = <T>(path: string, body: BodyInit, contentType: string) =>
   request<T>(path, { method: 'POST', body, headers: { 'Content-Type': contentType } })

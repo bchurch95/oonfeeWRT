@@ -44,3 +44,8 @@ ui/test-results/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 docs/node_modules/
+
+# Build outputs and imagebuilder downloads
+bin/
+deploy/openwrt-imagebuilder/openwrt-imagebuilder-*
+deploy/openwrt-imagebuilder/downloads/
