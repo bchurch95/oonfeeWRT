@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"maps"
 	"net"
 	"net/netip"
 	"sort"
@@ -127,10 +128,7 @@ func CanonicalProtocols(in []string) []string {
 	if seen["all"] {
 		return []string{"all"}
 	}
-	out := make([]string, 0, len(seen))
-	for value := range seen {
-		out = append(out, value)
-	}
+	out := maps.Keys(seen)
 	sort.Strings(out)
 	return out
 }
@@ -144,10 +142,7 @@ func CanonicalMACs(in []string) ([]string, error) {
 		}
 		seen[strings.ToLower(hw.String())] = true
 	}
-	out := make([]string, 0, len(seen))
-	for mac := range seen {
-		out = append(out, mac)
-	}
+	out := maps.Keys(seen)
 	sort.Strings(out)
 	return out, nil
 }

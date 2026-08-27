@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -255,10 +256,7 @@ func (d Doc) Preserved(existing Existing, config, name string) bool {
 
 // sortedKeys is the deterministic iteration Go maps do not give us.
 func sortedKeys(m map[string][]string) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
+	out := maps.Keys(m)
 	sort.Strings(out)
 	return out
 }
