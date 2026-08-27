@@ -214,7 +214,7 @@ func New(db *store.DB, fleet Fleet, enroll Enroller, log *slog.Logger) *Server {
 	}
 	instanceID, err := randomToken()
 	if err != nil {
-		panic("api: cannot generate controller instance identifier: " + err.Error())
+		panic(fmt.Errorf("api: cannot generate controller instance identifier: %w", err).Error())
 	}
 	srv := &Server{
 		Store: db, Fleet: fleet, Enroll: enroll, Log: log, Now: time.Now,
@@ -229,7 +229,7 @@ func New(db *store.DB, fleet Fleet, enroll Enroller, log *slog.Logger) *Server {
 	srv.Hub = NewHub(fleet, log)
 	runner, err := speedtest.NewHTTPRunner(speedtest.DefaultHTTPConfig())
 	if err != nil {
-		panic("api: invalid built-in speed-test configuration: " + err.Error())
+		panic(fmt.Errorf("api: invalid built-in speed-test configuration: %w", err).Error())
 	}
 	srv.SpeedTests = speedtest.New(db, runner, func(ctx context.Context, event, severity string, job speedtest.Job) error {
 		return db.LogEvent(ctx, store.Event{Category: "audit", Severity: severity,
@@ -247,7 +247,7 @@ func New(db *store.DB, fleet Fleet, enroll Enroller, log *slog.Logger) *Server {
 		// Only reachable if the parameters themselves are invalid, which would
 		// mean no password could ever be hashed. Fail loudly rather than run
 		// with a login path that leaks which accounts exist.
-		panic("api: cannot derive the timing-equaliser hash: " + err.Error())
+		panic(fmt.Errorf("api: cannot derive the timing-equaliser hash: %w", err).Error())
 	}
 	srv.dummyHash = h
 	return srv
