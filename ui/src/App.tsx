@@ -12,12 +12,13 @@ import { Settings } from './screens/Settings'
 import { PolicyEngine } from './screens/PolicyEngine'
 import { Topology } from './screens/Topology'
 import { Radios } from './screens/Radios'
+import { FirmwareBuilder } from './screens/FirmwareBuilder'
 import { Banner, Button } from './components/ui'
 import { NavigationIcon } from './components/icons'
 import type { NavigationIconName } from './components/icons'
 import { live } from './lib/live'
 
-type Screen = 'dashboard' | 'topology' | 'radios' | 'devices' | 'clients' | 'policy' | 'settings' | 'adopt' | 'logs'
+type Screen = 'dashboard' | 'topology' | 'radios' | 'devices' | 'clients' | 'policy' | 'settings' | 'adopt' | 'logs' | 'firmware'
 
 const NAV: { id: Screen; label: string; icon: NavigationIconName }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -29,6 +30,7 @@ const NAV: { id: Screen; label: string; icon: NavigationIconName }[] = [
   { id: 'settings', label: 'Settings', icon: 'settings' },
   { id: 'adopt', label: 'Adopt a device', icon: 'adopt' },
   { id: 'logs', label: 'Logs', icon: 'logs' },
+  { id: 'firmware', label: 'Firmware Builder', icon: 'settings' },
 ]
 
 function navigationPreferenceKey(username: string) {
@@ -459,6 +461,7 @@ export function App() {
                 onCurrentSessionRevoked={dropSession}
               />
             )}
+            {screen === 'firmware' && <FirmwareBuilder />}
             {screen === 'adopt' && <Adopt onAdopted={refresh} />}
             {screen === 'logs' && <Logs />}
           </ScreenBoundary>
