@@ -1,0 +1,5 @@
+config oonfeewrt 'settings'
+	option enabled '1'
+	option lab '1'
+	# Pre-deployment marker – oonfeeWRT probe will see this
+	option probe_marker 'oonfeewrt-predeploy'
