@@ -1,24 +1,26 @@
 package reconcile
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 const redactedUCIValue = "<redacted>"
+
+var sensitiveOptions = []string{
+	"key", "key1", "key2", "key3", "key4", "psk", "wpa_psk",
+	"preshared_key", "sae_password", "r0kh", "r1kh",
+	"password", "passphrase", "secret", "auth_secret", "acct_secret",
+	"dae_secret", "radius_secret", "encryption_key", "private_key",
+	"private_key_password", "private_key_passwd", "wps_pin",
+}
 
 // IsSensitiveOption reports UCI option names whose values are credentials or
 // private key material. The list is deliberately exact: nearby identifiers
 // such as encryption, key_index and public_key are useful diagnostic state and
 // must remain visible.
 func IsSensitiveOption(option string) bool {
-	switch strings.ToLower(option) {
-	case "key", "key1", "key2", "key3", "key4", "psk", "wpa_psk",
-		"preshared_key", "sae_password", "r0kh", "r1kh",
-		"password", "passphrase", "secret", "auth_secret", "acct_secret",
-		"dae_secret", "radius_secret", "encryption_key", "private_key",
-		"private_key_password", "private_key_passwd", "wps_pin":
-		return true
-	default:
-		return false
-	}
+	return slices.Contains(sensitiveOptions, strings.ToLower(option))
 }
 
 // RedactOptionValue is the shared output boundary for diagnostics that name a
