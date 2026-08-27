@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/netip"
 	"path"
@@ -88,10 +89,7 @@ func ownedInterfacesForPlan(plan *reconcile.DevicePlan) []string {
 			}
 		}
 	}
-	out := make([]string, 0, len(required))
-	for iface := range required {
-		out = append(out, iface)
-	}
+	out := maps.Keys(required)
 	sort.Strings(out)
 	return out
 }

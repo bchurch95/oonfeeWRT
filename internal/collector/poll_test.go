@@ -3,6 +3,7 @@ package collector
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"testing"
 	"time"
 
@@ -214,9 +215,5 @@ func TestLiveStationsPreservesOneMACOnCompetingBSSes(t *testing.T) {
 }
 
 func keysOf(m map[string]LiveStation) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	return out
+	return maps.Keys(m)
 }
