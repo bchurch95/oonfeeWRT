@@ -23,13 +23,22 @@ func (s *Server) handleFirmwareBuild(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	// TODO: parse request, validate target/profile, enqueue build job
-	// For now return a stub response so the UI can call the endpoint without 404.
-	resp := FirmwareBuildResponse{
-		JobID:  "demo-job-001",
-		Status: "queued",
+	var req FirmwareBuildRequest
+	if !decodeJSON(w, r, &req) {
+		return
 	}
+	if req.Target == "" {
+		req.Target = "ramips-mt7621"
+	}
+	if req.Profile == "" {
+		req.Profile = "Linksys_WRT3200ACM"
+	}
+	job := newFirmwareJob(req.Target, req.Profile)
+	go runFirmwareBuild(r.Context(), job)
+
 	w.Header().Set("Content-Type", "application/json")
-	// Simple JSON response
-	_, _ = w.Write([]byte(`{"job_id":"demo-job-001","status":"queued"}`))
+	_ = json.NewEncoder(w).Encode(FirmwareBuildResponse{
+		JobID:  job.ID,
+		Status: job.Status,
+	})
 }
