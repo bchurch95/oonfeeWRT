@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -1072,14 +1073,12 @@ func nftScalar(raw json.RawMessage) string {
 }
 
 func sortedTrueKeys(values map[string]bool) []string {
-	out := make([]string, 0, len(values))
-	for value, present := range values {
-		if present && value != "" {
-			out = append(out, value)
-		}
-	}
-	sort.Strings(out)
-	return out
+	keys := maps.Keys(values)
+	filtered := slices.DeleteFunc(keys, func(k string) bool {
+		return !values[k] || k == ""
+	})
+	sort.Strings(filtered)
+	return filtered
 }
 
 func sortedServiceKeys(values map[string]firewallService) []string {
