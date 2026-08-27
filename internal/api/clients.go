@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"maps"
 	"net/http"
 	"sort"
 	"strings"
@@ -184,10 +185,7 @@ func (s *Server) infrastructureMACs(devices []*store.Device) []string {
 			}
 		}
 	}
-	out := make([]string, 0, len(seen))
-	for mac := range seen {
-		out = append(out, mac)
-	}
+	out := maps.Keys(seen)
 	sort.Strings(out)
 	return out
 }
