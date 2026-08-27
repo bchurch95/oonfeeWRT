@@ -75,6 +75,15 @@ export default function FirmwareBuilder() {
       <pre style={{ marginTop: 16, whiteSpace: "pre-wrap", background: "#111", color: "#0f0", padding: 12 }}>
         {log || "Idle"}
       </pre>
+      {jobId && (
+        <div style={{ marginTop: 12, fontSize: 12 }}>
+          <strong>Artifacts:</strong>
+          <ul>
+            <li>Build logs saved for job {jobId}</li>
+            <li>Images will be in deploy/openwrt-imagebuilder/.../bin/targets/</li>
+          </ul>
+        </div>
+      )}
       <p style={{ marginTop: 12, fontSize: 12, opacity: 0.7 }}>
         Builds run on your server via deploy/openwrt-imagebuilder/. This UI is a placeholder for a backend job API.
       </p>

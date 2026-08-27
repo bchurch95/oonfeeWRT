@@ -16,6 +16,7 @@ type firmwareJob struct {
 	Profile   string    `json:"profile"`
 	Status    string    `json:"status"` // queued, running, done, error
 	Log       []string  `json:"log"`
+	Artifacts []string  `json:"artifacts"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -83,4 +84,13 @@ func runFirmwareBuild(ctx context.Context, job *firmwareJob) {
 	job.Status = "done"
 	job.Log = append(job.Log, "Build completed successfully")
 	job.Log = append(job.Log, string(out))
+
+	// Collect artifacts
+	artifactDir := fmt.Sprintf("%s/bin/targets/%s", buildDir, target)
+	entries, _ := os.ReadDir(artifactDir)
+	for _, e := range entries {
+		if !e.IsDir() {
+			job.Artifacts = append(job.Artifacts, e.Name())
+		}
+	}
 }
