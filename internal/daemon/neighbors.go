@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 	"time"
 
@@ -553,10 +554,7 @@ func (d *Daemon) noteExternalRequests(deviceID int64, c *ubus.Client) {
 }
 
 func sortedKeys(m map[string]bool) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
+	out := maps.Keys(m)
 	sort.Strings(out)
 	return out
 }
