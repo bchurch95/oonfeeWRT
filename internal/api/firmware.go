@@ -42,3 +42,22 @@ func (s *Server) handleFirmwareBuild(w http.ResponseWriter, r *http.Request) {
 		Status: job.Status,
 	})
 }
+
+// handleFirmwareJob returns job status and logs for polling
+func (s *Server) handleFirmwareJob(w http.ResponseWriter, r *http.Request) {
+	// Simple path parsing: /api/v1/firmware/jobs/{id}
+	// For brevity, assume id is in query param ?id=
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeErr(w, http.StatusBadRequest, "missing job id")
+		return
+	}
+	fwMu.Lock()
+	job, ok := fwJobs[id]
+	fwMu.Unlock()
+	if !ok {
+		writeErr(w, http.StatusNotFound, "job not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, job)
+}

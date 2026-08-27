@@ -7,17 +7,25 @@ export default function FirmwareBuilder() {
   const [log, setLog] = useState<string>("");
   const [target, setTarget] = useState("ramips-mt7621");
   const [profile, setProfile] = useState("Linksys_WRT3200ACM");
+  const [jobId, setJobId] = useState<string>("");
 
   const startBuild = async () => {
     setBuilding(true);
     setLog("Starting OpenWrt Image Builder...\n");
     try {
       const res = await api.post("/api/v1/firmware/build", { target, profile });
+      setJobId(res.job_id);
       setLog((l) => l + `Job ${res.job_id} queued with status ${res.status}\n`);
-      // Poll placeholder
-      setTimeout(() => {
-        setLog((l) => l + "Downloaded Image Builder\nmake image completed\nArtifacts ready for download");
-        setBuilding(false);
+      // Poll for updates
+      const interval = setInterval(async () => {
+        try {
+          const job = await api.get(`/api/v1/firmware/jobs?id=${res.job_id}`);
+          setLog((l) => l + job.log.join("\n") + "\n");
+          if (job.status === "done" || job.status === "error") {
+            clearInterval(interval);
+            setBuilding(false);
+          }
+        } catch {}
       }, 2000);
     } catch (e) {
       setLog((l) => l + `Error: ${e}\n`);

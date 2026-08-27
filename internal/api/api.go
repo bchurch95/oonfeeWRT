@@ -401,6 +401,7 @@ func (s *Server) reauthenticatedRoutes() []protectedRoute {
 		{"POST /api/v1/restores/previews/{id}/confirm", store.RoleOwner, s.handleConfirmRestore},
 		{"POST /api/v1/restores/suppression/resume", store.RoleOwner, s.handleResumeRouterWrites},
 		{"POST /api/v1/firmware/build", store.RoleOwner, s.handleFirmwareBuild},
+		{"GET /api/v1/firmware/jobs", store.RoleOwner, s.handleFirmwareJob},
 	}
 }
 
