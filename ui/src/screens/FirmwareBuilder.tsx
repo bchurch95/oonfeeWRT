@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, Button, Banner } from "../components/ui";
 
+interface FirmwareArtifact {
+  file_name: string;
+  size_bytes: number;
+  mod_time: string;
+}
+
 interface ProfilePreset {
   id: string;
   name: string;
@@ -8,6 +14,7 @@ interface ProfilePreset {
   profile: string;
   description: string;
   flash_guide: string;
+  artifacts?: FirmwareArtifact[];
 }
 
 interface BuildJob {
@@ -20,6 +27,14 @@ interface BuildJob {
   artifacts?: string[];
   created_at: string;
   updated_at: string;
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes <= 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
 const FALLBACK_PROFILES: ProfilePreset[] = [
@@ -96,6 +111,20 @@ export default function FirmwareBuilder() {
   const logEndRef = useRef<HTMLDivElement>(null);
   const pollIntervalRef = useRef<number | null>(null);
 
+  const loadProfiles = () => {
+    fetch("/api/v1/firmware/profiles")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && data.profiles && Array.isArray(data.profiles)) {
+          setProfiles(data.profiles);
+          if (data.num_cpu) {
+            setNumCPU(data.num_cpu);
+          }
+        }
+      })
+      .catch(() => {});
+  };
+
   // Load profiles on mount
   useEffect(() => {
     fetch("/api/v1/firmware/profiles")
@@ -136,6 +165,9 @@ export default function FirmwareBuilder() {
         setJob(data);
         if (data.status === "done" || data.status === "error") {
           setBuilding(false);
+          if (data.status === "done") {
+            loadProfiles();
+          }
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
@@ -304,6 +336,72 @@ export default function FirmwareBuilder() {
           </div>
         )}
 
+        {selectedPreset?.artifacts && selectedPreset.artifacts.length > 0 && (
+          <div
+            style={{
+              marginBottom: 16,
+              padding: 12,
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              background: "var(--surface-0)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                Compiled Images Available for {selectedPreset.name}:
+              </strong>
+              <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                Retained until replaced by a new build of this model
+              </span>
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              {selectedPreset.artifacts.map((art) => (
+                <div
+                  key={art.file_name}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "6px 10px",
+                    borderRadius: 4,
+                    background: "var(--surface-1)",
+                    border: "1px solid var(--border)",
+                    fontSize: 12,
+                  }}
+                >
+                  <div style={{ display: "grid", gap: 2 }}>
+                    <span style={{ fontFamily: "monospace", color: "var(--text-primary)", wordBreak: "break-all" }}>
+                      {art.file_name}
+                    </span>
+                    <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                      Size: {formatBytes(art.size_bytes)} {art.mod_time ? `• Last built: ${new Date(art.mod_time).toLocaleString()}` : ""}
+                    </span>
+                  </div>
+                  <a
+                    href={`/api/v1/firmware/download?profile=${encodeURIComponent(selectedPreset.profile)}&file=${encodeURIComponent(art.file_name)}`}
+                    download={art.file_name}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "5px 12px",
+                      borderRadius: 4,
+                      background: art.file_name.endsWith(".bin") || art.file_name.endsWith(".img") ? "#238636" : "var(--surface-2)",
+                      color: "#fff",
+                      textDecoration: "none",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    ⬇ Download
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <Button onClick={handleStartBuild} disabled={building}>
             {building ? "Building Image in Parallel…" : "Build Firmware Image"}
@@ -405,6 +503,55 @@ export default function FirmwareBuilder() {
               </div>
             </div>
           )}
+        </Card>
+      )}
+
+      {profiles.some((p) => p.artifacts && p.artifacts.length > 0) && (
+        <Card title="Fleet Compiled Firmware Images (Ready to Deploy)">
+          <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-secondary)" }}>
+            These model images are stored and accessible for instant download and deployment. They remain available until a new build of the same model replaces them.
+          </p>
+          <div style={{ display: "grid", gap: 10 }}>
+            {profiles.filter((p) => p.artifacts && p.artifacts.length > 0).map((p) => (
+              <div
+                key={p.id}
+                style={{
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid var(--border)",
+                  background: "var(--surface-0)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <strong style={{ fontSize: 13, color: "var(--text-primary)" }}>{p.name} ({p.target})</strong>
+                  <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>Profile: {p.profile}</span>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {p.artifacts!.map((art) => (
+                    <a
+                      key={art.file_name}
+                      href={`/api/v1/firmware/download?profile=${encodeURIComponent(p.profile)}&file=${encodeURIComponent(art.file_name)}`}
+                      download={art.file_name}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "5px 10px",
+                        borderRadius: 4,
+                        background: art.file_name.endsWith(".bin") || art.file_name.endsWith(".img") ? "#238636" : "var(--surface-2)",
+                        color: "#fff",
+                        textDecoration: "none",
+                        fontSize: 11,
+                        fontWeight: 600,
+                      }}
+                    >
+                      ⬇ {art.file_name} ({formatBytes(art.size_bytes)})
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
     </div>

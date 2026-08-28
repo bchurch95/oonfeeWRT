@@ -116,3 +116,45 @@ func TestFirmwareDownloadArtifacts(t *testing.T) {
 		t.Fatalf("unexpected content: %q", w.Body.String())
 	}
 }
+
+func TestFirmwareProfileArtifactDownloadAndRetention(t *testing.T) {
+	srv := &Server{}
+	baseDir := locateImageBuilderBase()
+	testProfile := "test_device_model"
+	artDir := filepath.Join(baseDir, "artifacts", testProfile)
+	_ = os.MkdirAll(artDir, 0755)
+	defer os.RemoveAll(artDir)
+
+	testFile := filepath.Join(artDir, "openwrt-sysupgrade.bin")
+	if err := os.WriteFile(testFile, []byte("compiled-binary-data"), 0600); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	// Verify GetProfileArtifacts finds the artifact
+	arts := GetProfileArtifacts(testProfile)
+	if len(arts) != 1 || arts[0].FileName != "openwrt-sysupgrade.bin" {
+		t.Fatalf("unexpected artifacts: %+v", arts)
+	}
+
+	// Verify download via ?profile=
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/firmware/download?profile="+testProfile+"&file=openwrt-sysupgrade.bin", nil)
+	w := httptest.NewRecorder()
+	srv.handleFirmwareDownload(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("download status=%d want=%d body=%s", w.Code, http.StatusOK, w.Body.String())
+	}
+	if w.Body.String() != "compiled-binary-data" {
+		t.Fatalf("unexpected content: %q", w.Body.String())
+	}
+
+	// Overwrite with a newer build for the same model
+	if err := os.WriteFile(testFile, []byte("newer-compiled-binary"), 0600); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+	w2 := httptest.NewRecorder()
+	srv.handleFirmwareDownload(w2, req)
+	if w2.Body.String() != "newer-compiled-binary" {
+		t.Fatalf("unexpected updated content: %q", w2.Body.String())
+	}
+}

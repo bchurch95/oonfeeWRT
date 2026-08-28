@@ -5,17 +5,72 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
+	"time"
 )
+
+// FirmwareArtifact represents a compiled firmware binary or companion file.
+type FirmwareArtifact struct {
+	FileName  string    `json:"file_name"`
+	SizeBytes int64     `json:"size_bytes"`
+	ModTime   time.Time `json:"mod_time"`
+}
 
 // FirmwareProfileInfo defines a supported hardware profile preset.
 type FirmwareProfileInfo struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Target      string `json:"target"`
-	Profile     string `json:"profile"`
-	Description string `json:"description"`
-	FlashGuide  string `json:"flash_guide"`
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Target      string             `json:"target"`
+	Profile     string             `json:"profile"`
+	Description string             `json:"description"`
+	FlashGuide  string             `json:"flash_guide"`
+	Artifacts   []FirmwareArtifact `json:"artifacts,omitempty"`
+}
+
+// GetProfileArtifacts returns all currently preserved compiled artifacts for a given profile.
+func GetProfileArtifacts(profile string) []FirmwareArtifact {
+	cleanProfile := filepath.Base(profile)
+	baseDir := locateImageBuilderBase()
+	artifactDir := filepath.Join(baseDir, "artifacts", cleanProfile)
+
+	info, err := os.Stat(artifactDir)
+	if err != nil || !info.IsDir() {
+		return nil
+	}
+
+	entries, err := os.ReadDir(artifactDir)
+	if err != nil {
+		return nil
+	}
+
+	var list []FirmwareArtifact
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		fi, err := e.Info()
+		if err != nil {
+			continue
+		}
+		list = append(list, FirmwareArtifact{
+			FileName:  e.Name(),
+			SizeBytes: fi.Size(),
+			ModTime:   fi.ModTime(),
+		})
+	}
+
+	// Sort primary binaries (.bin, .img, .tar.gz) first, then by name
+	sort.Slice(list, func(i, j int) bool {
+		iBin := strings.HasSuffix(list[i].FileName, ".bin") || strings.HasSuffix(list[i].FileName, ".img") || strings.HasSuffix(list[i].FileName, ".tar.gz")
+		jBin := strings.HasSuffix(list[j].FileName, ".bin") || strings.HasSuffix(list[j].FileName, ".img") || strings.HasSuffix(list[j].FileName, ".tar.gz")
+		if iBin != jBin {
+			return iBin
+		}
+		return list[i].FileName < list[j].FileName
+	})
+
+	return list
 }
 
 // DefaultFirmwareProfiles returns known validated hardware presets.
@@ -100,8 +155,12 @@ func (s *Server) handleFirmwareProfiles(w http.ResponseWriter, r *http.Request) 
 		writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
+	profiles := DefaultFirmwareProfiles()
+	for i := range profiles {
+		profiles[i].Artifacts = GetProfileArtifacts(profiles[i].Profile)
+	}
 	resp := map[string]any{
-		"profiles": DefaultFirmwareProfiles(),
+		"profiles": profiles,
 		"num_cpu":  runtime.NumCPU(),
 		"version":  "23.05.5",
 	}
@@ -158,27 +217,34 @@ func (s *Server) handleFirmwareJob(w http.ResponseWriter, r *http.Request) {
 // handleFirmwareDownload streams a generated artifact file.
 func (s *Server) handleFirmwareDownload(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
+	profile := r.URL.Query().Get("profile")
 	fileName := r.URL.Query().Get("file")
-	if id == "" || fileName == "" {
-		writeErr(w, http.StatusBadRequest, "missing id or file parameter")
-		return
-	}
-
-	job, ok := getJobSnapshot(id)
-	if !ok {
-		writeErr(w, http.StatusNotFound, "job not found")
+	if fileName == "" || (id == "" && profile == "") {
+		writeErr(w, http.StatusBadRequest, "missing parameters (provide file and either id or profile)")
 		return
 	}
 
 	// Security: ensure fileName is just a base filename without directory traversal
 	cleanName := filepath.Base(fileName)
-	if cleanName != fileName || strings.Contains(fileName, "..") {
+	if cleanName != fileName || strings.Contains(fileName, "..") || cleanName == "." || cleanName == "/" {
 		writeErr(w, http.StatusBadRequest, "invalid file name")
 		return
 	}
 
-	// Check if file is in job's artifact directory
-	filePath := filepath.Join(job.ArtifactDir, cleanName)
+	var filePath string
+	if profile != "" {
+		cleanProfile := filepath.Base(profile)
+		baseDir := locateImageBuilderBase()
+		filePath = filepath.Join(baseDir, "artifacts", cleanProfile, cleanName)
+	} else if id != "" {
+		job, ok := getJobSnapshot(id)
+		if !ok {
+			writeErr(w, http.StatusNotFound, "job not found")
+			return
+		}
+		filePath = filepath.Join(job.ArtifactDir, cleanName)
+	}
+
 	info, err := os.Stat(filePath)
 	if err != nil || info.IsDir() {
 		writeErr(w, http.StatusNotFound, "artifact not found")

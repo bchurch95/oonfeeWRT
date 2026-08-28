@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -177,23 +178,55 @@ func runFirmwareBuild(job *firmwareJob) {
 		appendJobLog(job, outLines...)
 	}
 
-	// Locate generated artifacts
+	// Locate generated artifacts and preserve them per model
 	artifactDir := filepath.Join(buildDir, "bin", "targets", targetSubpath)
 	if _, err := os.Stat(artifactDir); err == nil {
+		persistDir := filepath.Join(baseDir, "artifacts", filepath.Base(job.Profile))
+		// Clean and replace existing artifacts for this specific model
+		_ = os.RemoveAll(persistDir)
+		_ = os.MkdirAll(persistDir, 0755)
+
 		var artifacts []string
 		entries, _ := os.ReadDir(artifactDir)
 		for _, e := range entries {
 			if !e.IsDir() {
-				artifacts = append(artifacts, e.Name())
+				srcFile := filepath.Join(artifactDir, e.Name())
+				// Preserve profile-specific images and common companion files
+				if strings.Contains(e.Name(), job.Profile) || e.Name() == "sha256sums" || e.Name() == "profiles.json" || strings.HasSuffix(e.Name(), ".manifest") {
+					dstFile := filepath.Join(persistDir, e.Name())
+					if err := copyFirmwareFile(srcFile, dstFile); err == nil {
+						artifacts = append(artifacts, e.Name())
+					}
+				}
 			}
 		}
+
 		fwMu.Lock()
-		job.ArtifactDir = artifactDir
+		job.ArtifactDir = persistDir
 		job.Artifacts = artifacts
 		job.UpdatedAt = time.Now()
 		fwMu.Unlock()
-		appendJobLog(job, fmt.Sprintf("Found %d artifact(s) in %s", len(artifacts), artifactDir))
+		appendJobLog(job, fmt.Sprintf("Preserved %d compiled image artifact(s) for model '%s' in %s", len(artifacts), job.Profile, persistDir))
 	}
 
 	setJobStatus(job, "done")
+}
+
+func copyFirmwareFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+	return out.Sync()
 }
