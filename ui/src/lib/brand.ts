@@ -5,7 +5,8 @@ export function getAppTitle(): string {
       return local.trim()
     }
   } catch {}
-  const envTitle = import.meta.env.VITE_APP_TITLE
+  const envObj = (import.meta as unknown as { env?: Record<string, string> })?.env
+  const envTitle = envObj?.VITE_APP_TITLE
   if (envTitle && typeof envTitle === 'string' && envTitle.trim()) {
     return envTitle.trim()
   }
