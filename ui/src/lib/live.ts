@@ -48,7 +48,7 @@ export class Live {
   private handlers = new Set<Handler>()
   private devices = new Map<number, number>()
   private retry = 0
-  private timer: number | null = null
+  private timer: ReturnType<typeof setTimeout> | null = null
   private closed = false
 
   /** Fires with true when connected, false when not. */
@@ -56,22 +56,23 @@ export class Live {
 
   connect() {
     if (this.ws) return
-	if (this.timer !== null) {
-	  window.clearTimeout(this.timer)
-	  this.timer = null
-	}
+    if (this.timer !== null) {
+      clearTimeout(this.timer)
+      this.timer = null
+    }
     // Connecting is an explicit intent to be open, so it clears a previous
     // close. Without this, the App's "close when signed out" effect — which
     // runs once on mount, before the session has loaded — latched the channel
     // shut permanently and every later connect() silently returned.
     this.closed = false
     this.retry = 0
-    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const ws = new WebSocket(`${proto}//${location.host}/api/v1/live`)
+    const proto = typeof location !== 'undefined' && location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const host = typeof location !== 'undefined' ? location.host : 'localhost'
+    const ws = new WebSocket(`${proto}//${host}/api/v1/live`)
     this.ws = ws
 
     ws.onopen = () => {
-	  if (this.ws !== ws) return
+      if (this.ws !== ws) return
       this.retry = 0
       this.onState?.(true)
       // Re-subscribe on reconnect. The server treats a repeat subscribe as a
@@ -79,7 +80,7 @@ export class Live {
       for (const id of this.devices.keys()) this.sendRaw({ type: 'subscribe', topic: 'device.stats', device_id: id })
     }
     ws.onmessage = (e) => {
-	  if (this.ws !== ws) return
+      if (this.ws !== ws) return
       try {
         const msg = JSON.parse(e.data)
         this.handlers.forEach((h) => h(msg))
@@ -88,14 +89,14 @@ export class Live {
       }
     }
     ws.onclose = () => {
-	  if (this.ws !== ws) return
+      if (this.ws !== ws || this.closed) return
       this.ws = null
       this.onState?.(false)
       this.scheduleReconnect()
     }
-	ws.onerror = () => {
-	  if (this.ws === ws) ws.close()
-	}
+    ws.onerror = () => {
+      if (this.ws === ws) ws.close()
+    }
   }
 
   private scheduleReconnect() {
@@ -103,7 +104,7 @@ export class Live {
     // Exponential with a ceiling: a controller that is restarting should not be
     // hammered, and a browser left open overnight should still reconnect.
     const delay = Math.min(30_000, 500 * 2 ** this.retry++)
-    this.timer = window.setTimeout(() => {
+    this.timer = setTimeout(() => {
       this.timer = null
       this.connect()
     }, delay)
@@ -146,14 +147,14 @@ export class Live {
 
   close() {
     this.closed = true
-	if (this.timer !== null) {
-	  window.clearTimeout(this.timer)
-	  this.timer = null
-	}
-	const ws = this.ws
+    if (this.timer !== null) {
+      clearTimeout(this.timer)
+      this.timer = null
+    }
+    const ws = this.ws
     this.ws = null
-	ws?.close()
-	this.onState?.(false)
+    ws?.close()
+    this.onState?.(false)
   }
 }
 
