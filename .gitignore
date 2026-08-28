@@ -49,3 +49,4 @@ docs/node_modules/
 bin/
 deploy/openwrt-imagebuilder/openwrt-imagebuilder-*
 deploy/openwrt-imagebuilder/downloads/
+deploy/openwrt-imagebuilder/artifacts/
