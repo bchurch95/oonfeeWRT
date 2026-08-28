@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { api, ApiError } from '../lib/api'
 import type { SessionInfo } from '../lib/api'
 import { Button, Field, Banner } from '../components/ui'
+import { getAppTitle } from '../lib/brand'
 
 /**
  * Sign-in and first-run enrolment.
@@ -71,7 +72,7 @@ export function Auth({
         }}
       >
         <div>
-          <h1 style={{ fontSize: 18, margin: 0 }}>oonfeeWRT</h1>
+          <h1 style={{ fontSize: 18, margin: 0 }}>{getAppTitle()}</h1>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
             {needsSetup
               ? 'Create the administrator account. This happens once — there is no default password.'

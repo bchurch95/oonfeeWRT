@@ -63,7 +63,7 @@ describe('App session boundaries', () => {
     mocks.api.setupState.mockRejectedValueOnce(new Error('controller offline'))
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: 'oonfeeWRT is unavailable' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: /is unavailable/ })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull()
 
     mocks.api.setupState.mockResolvedValue({ needs_setup: false })
@@ -156,7 +156,7 @@ describe('App session boundaries', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Topology' }))
     const heading = await screen.findByRole('heading', { name: 'Topology' })
     await waitFor(() => expect(document.activeElement).toBe(heading))
-    expect(document.title).toBe('Topology — oonfeeWRT')
+    expect(document.title).toMatch(/^Topology — /)
     expect(window.location.pathname).toBe('/topology')
   })
 

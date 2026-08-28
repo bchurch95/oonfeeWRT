@@ -17,6 +17,7 @@ import { Banner, Button } from './components/ui'
 import { NavigationIcon } from './components/icons'
 import type { NavigationIconName } from './components/icons'
 import { live } from './lib/live'
+import { getAppTitle } from './lib/brand'
 
 type Screen = 'dashboard' | 'topology' | 'radios' | 'devices' | 'clients' | 'policy' | 'settings' | 'adopt' | 'logs' | 'firmware'
 
@@ -228,21 +229,23 @@ export function App() {
     live.close()
   }, [ready, username])
 
+  const appTitle = getAppTitle()
+
   useEffect(() => {
     if (!username) return
-    document.title = `${NAV.find((item) => item.id === screen)?.label ?? 'oonfeeWRT'} — oonfeeWRT`
+    document.title = `${NAV.find((item) => item.id === screen)?.label ?? appTitle} — ${appTitle}`
     const timer = window.setTimeout(() => {
       const target = mainRef.current?.querySelector<HTMLElement>('h1') ?? mainRef.current
       if (target && target !== mainRef.current) target.tabIndex = -1
       target?.focus()
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [screen, username])
+  }, [screen, username, appTitle])
 
   if (!ready) {
     return (
       <main style={{ height: '100%', display: 'grid', placeItems: 'center' }}>
-        <div role="status">Connecting to oonfeeWRT…</div>
+        <div role="status">Connecting to {appTitle}…</div>
       </main>
     )
   }
@@ -250,7 +253,7 @@ export function App() {
     return (
       <main style={{ height: '100%', display: 'grid', placeItems: 'center', padding: 24 }}>
         <div style={{ width: 420, maxWidth: '100%', display: 'grid', gap: 12 }}>
-          <h1 style={{ margin: 0, fontSize: 18 }}>oonfeeWRT is unavailable</h1>
+          <h1 style={{ margin: 0, fontSize: 18 }}>{appTitle} is unavailable</h1>
           <div role="alert"><Banner tone="critical">{bootstrapErr}</Banner></div>
           <Button onClick={() => setBootstrapAttempt((attempt) => attempt + 1)}>Retry connection</Button>
         </div>
@@ -283,7 +286,7 @@ export function App() {
           borderBottom: '1px solid var(--border)',
         }}
       >
-        <strong style={{ fontSize: 13 }}>oonfeeWRT</strong>
+        <strong style={{ fontSize: 13 }}>{appTitle}</strong>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12 }}>
           <button
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
