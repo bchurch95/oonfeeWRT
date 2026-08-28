@@ -130,13 +130,14 @@ func (s *Server) handleFirmwareBuild(w http.ResponseWriter, r *http.Request) {
 	}
 
 	job := newFirmwareJob(req.Target, req.Profile, threads)
-	go runFirmwareBuild(job)
-
-	writeJSON(w, http.StatusOK, FirmwareBuildResponse{
+	resp := FirmwareBuildResponse{
 		JobID:   job.ID,
 		Status:  job.Status,
 		Threads: job.Threads,
-	})
+	}
+	go runFirmwareBuild(job)
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // handleFirmwareJob returns job status and logs for polling.
@@ -146,9 +147,7 @@ func (s *Server) handleFirmwareJob(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "missing job id")
 		return
 	}
-	fwMu.Lock()
-	job, ok := fwJobs[id]
-	fwMu.Unlock()
+	job, ok := getJobSnapshot(id)
 	if !ok {
 		writeErr(w, http.StatusNotFound, "job not found")
 		return
@@ -165,9 +164,7 @@ func (s *Server) handleFirmwareDownload(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	fwMu.Lock()
-	job, ok := fwJobs[id]
-	fwMu.Unlock()
+	job, ok := getJobSnapshot(id)
 	if !ok {
 		writeErr(w, http.StatusNotFound, "job not found")
 		return

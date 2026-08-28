@@ -66,6 +66,19 @@ func setJobStatus(job *firmwareJob, status string) {
 	job.UpdatedAt = time.Now()
 }
 
+func getJobSnapshot(id string) (firmwareJob, bool) {
+	fwMu.Lock()
+	defer fwMu.Unlock()
+	job, ok := fwJobs[id]
+	if !ok {
+		return firmwareJob{}, false
+	}
+	cp := *job
+	cp.Log = append([]string(nil), job.Log...)
+	cp.Artifacts = append([]string(nil), job.Artifacts...)
+	return cp, true
+}
+
 // locateImageBuilderBase returns the absolute path to deploy/openwrt-imagebuilder
 func locateImageBuilderBase() string {
 	candidates := []string{
@@ -167,16 +180,19 @@ func runFirmwareBuild(job *firmwareJob) {
 	// Locate generated artifacts
 	artifactDir := filepath.Join(buildDir, "bin", "targets", targetSubpath)
 	if _, err := os.Stat(artifactDir); err == nil {
-		fwMu.Lock()
-		job.ArtifactDir = artifactDir
+		var artifacts []string
 		entries, _ := os.ReadDir(artifactDir)
 		for _, e := range entries {
 			if !e.IsDir() {
-				job.Artifacts = append(job.Artifacts, e.Name())
+				artifacts = append(artifacts, e.Name())
 			}
 		}
+		fwMu.Lock()
+		job.ArtifactDir = artifactDir
+		job.Artifacts = artifacts
+		job.UpdatedAt = time.Now()
 		fwMu.Unlock()
-		appendJobLog(job, fmt.Sprintf("Found %d artifact(s) in %s", len(job.Artifacts), artifactDir))
+		appendJobLog(job, fmt.Sprintf("Found %d artifact(s) in %s", len(artifacts), artifactDir))
 	}
 
 	setJobStatus(job, "done")
