@@ -30,7 +30,7 @@ const NAV: { id: Screen; label: string; icon: NavigationIconName }[] = [
   { id: 'settings', label: 'Settings', icon: 'settings' },
   { id: 'adopt', label: 'Adopt a device', icon: 'adopt' },
   { id: 'logs', label: 'Logs', icon: 'logs' },
-  { id: 'firmware', label: 'Firmware Builder', icon: 'settings' },
+  { id: 'firmware', label: 'Firmware Builder', icon: 'firmware' },
 ]
 
 function navigationPreferenceKey(username: string) {

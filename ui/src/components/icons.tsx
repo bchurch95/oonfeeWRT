@@ -8,6 +8,7 @@ export type NavigationIconName =
   | 'settings'
   | 'adopt'
   | 'logs'
+  | 'firmware'
   | 'expand'
   | 'collapse'
 
@@ -68,6 +69,12 @@ export function NavigationIcon({ name }: { name: NavigationIconName }) {
         return <>
           <path d="M6 3.5h8l4 4V20.5H6Z" />
           <path d="M14 3.5v4h4M9 11h6M9 14.5h6M9 18h4" />
+        </>
+      case 'firmware':
+        return <>
+          <rect x="5" y="5" width="14" height="14" rx="2" />
+          <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" />
+          <rect x="8.5" y="8.5" width="7" height="7" rx="1" />
         </>
       case 'expand':
         return <>
