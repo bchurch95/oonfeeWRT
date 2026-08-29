@@ -82,10 +82,18 @@ func getJobSnapshot(id string) (firmwareJob, bool) {
 
 // locateImageBuilderBase returns the absolute path to deploy/openwrt-imagebuilder
 func locateImageBuilderBase() string {
+	if env := os.Getenv("OONFEEWRT_IMAGEBUILDER_DIR"); env != "" {
+		if abs, err := filepath.Abs(env); err == nil {
+			return abs
+		}
+		return env
+	}
+
 	candidates := []string{
-		"/home/ben/oonfeeWRT/deploy/openwrt-imagebuilder",
 		"deploy/openwrt-imagebuilder",
 		"../deploy/openwrt-imagebuilder",
+		"../../deploy/openwrt-imagebuilder",
+		"../../../deploy/openwrt-imagebuilder",
 	}
 	for _, c := range candidates {
 		if info, err := os.Stat(c); err == nil && info.IsDir() {
@@ -96,7 +104,26 @@ func locateImageBuilderBase() string {
 			return c
 		}
 	}
-	return "/home/ben/oonfeeWRT/deploy/openwrt-imagebuilder"
+
+	// Search upwards from current working directory
+	if cwd, err := os.Getwd(); err == nil {
+		dir := cwd
+		for i := 0; i < 6; i++ {
+			target := filepath.Join(dir, "deploy", "openwrt-imagebuilder")
+			if info, err := os.Stat(target); err == nil && info.IsDir() {
+				return target
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+
+	fallback := filepath.Join(os.TempDir(), "oonfeewrt-imagebuilder")
+	_ = os.MkdirAll(fallback, 0755)
+	return fallback
 }
 
 // runFirmwareBuild executes the multi-threaded OpenWrt Image Builder build asynchronously.
@@ -138,7 +165,11 @@ func runFirmwareBuild(job *firmwareJob) {
 		dlCmd := fmt.Sprintf("wget -c -q '%s' -O '%s' && tar -xf '%s' -C '%s'",
 			downloadURL, tarball, tarball, baseDir)
 		cmd := exec.CommandContext(ctx, "bash", "-c", dlCmd)
-		cmd.Env = append(os.Environ(), "PATH=/home/ben/.local/bin:/usr/local/bin:/usr/bin:/bin:"+os.Getenv("PATH"))
+		if home, err := os.UserHomeDir(); err == nil && home != "" {
+			cmd.Env = append(os.Environ(), fmt.Sprintf("PATH=%s/.local/bin:/usr/local/bin:/usr/bin:/bin:%s", home, os.Getenv("PATH")))
+		} else {
+			cmd.Env = append(os.Environ(), "PATH=/usr/local/bin:/usr/bin:/bin:"+os.Getenv("PATH"))
+		}
 		if out, err := cmd.CombinedOutput(); err != nil {
 			setJobStatus(job, "error")
 			appendJobLog(job, fmt.Sprintf("Failed to download or extract Image Builder: %v", err), string(out))
@@ -159,7 +190,11 @@ func runFirmwareBuild(job *firmwareJob) {
 	)
 
 	cmd := exec.CommandContext(ctx, "bash", "-c", makeCmdStr)
-	cmd.Env = append(os.Environ(), "PATH=/home/ben/.local/bin:/usr/local/bin:/usr/bin:/bin:"+os.Getenv("PATH"))
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		cmd.Env = append(os.Environ(), fmt.Sprintf("PATH=%s/.local/bin:/usr/local/bin:/usr/bin:/bin:%s", home, os.Getenv("PATH")))
+	} else {
+		cmd.Env = append(os.Environ(), "PATH=/usr/local/bin:/usr/bin:/bin:"+os.Getenv("PATH"))
+	}
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
