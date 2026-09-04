@@ -7,6 +7,7 @@ const start = [
 ]
 
 const install = [
+  { text: 'Build from source', link: '/installation/source' },
   { text: 'Standalone binary', link: '/installation/binary' },
   { text: 'Docker Compose', link: '/installation/docker' },
   { text: 'Reverse proxy and TLS', link: '/installation/reverse-proxy' },
