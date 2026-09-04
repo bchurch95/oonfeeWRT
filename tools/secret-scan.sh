@@ -25,10 +25,19 @@ say() { printf '%s\n' "$*"; }
 # the exact shape a Go constant takes — went straight through a scanner that
 # reported "clean". Verified by planting one before trusting the result.
 say "== assignments that look like a credential =="
-if grep -rniE '(passphrase|password|psk|secret|token|api[_-]?key)[[:space:]]*[:=][[:space:]]*"[^"]{10,}"' \
-     --include='*.go' --include='*.ts' --include='*.tsx' --include='*.py' \
-     --include='*.sh' --include='*.json' --include='*.md' . 2>/dev/null \
-   | grep -v node_modules | grep -viE "$FAKE"; then
+# Scan only files git tracks or would track (untracked, not ignored). A bare
+# `grep -r .` also walks gitignored build output — node modules and the image
+# builder's build_dir/ — whose vendor scripts legitimately name passphrase and
+# psk variables and would false-positive a clean tree after a firmware build.
+scan=$(git ls-files --cached --others --exclude-standard 2>/dev/null \
+  | grep -iE '\.(go|ts|tsx|py|sh|json|md)$' | tr '\n' ' ')
+hits=""
+if [ -n "$scan" ]; then
+  hits=$(grep -niE '(passphrase|password|psk|secret|token|api[_-]?key)[[:space:]]*[:=][[:space:]]*"[^"]{10,}"' \
+    -- $scan 2>/dev/null | grep -viE "$FAKE" || true)
+fi
+if [ -n "$hits" ]; then
+  printf '%s\n' "$hits"
   say "  ^ each of these must be a placeholder, or it does not belong here"
   status=1
 else
