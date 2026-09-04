@@ -110,6 +110,14 @@ else
   ok "Node v${nver} -> ${PREFIX}/node"
 fi
 
+# GitHub Actions: this script runs in its own shell, so `export PATH` would not
+# survive to the next step. GITHUB_PATH is the Actions idiom for a persistent
+# PATH addition; append the toolchain locations setup.sh owns so a later step
+# (e.g. `make build`) inherits them without re-exporting.
+if [ -n "${GITHUB_PATH:-}" ]; then
+  printf '%s\n' "${PREFIX}/go/bin" "${PREFIX}/bin" >> "$GITHUB_PATH"
+fi
+
 # ------------------------------------------------- 4. verify + summary --------
 say "4/4 verifying"
 v_go=$(    command -v go   >/dev/null 2>&1 && go version | head -n1            || echo "MISSING")
