@@ -1035,6 +1035,44 @@ function TopologySummary({ onOpenTopology }: { onOpenTopology?: () => void }) {
  * Client Devices. It is intentionally not a sum of per-radio counters: those
  * counters have no client address and therefore cannot apply network scope.
  */
+/** The headline Internet numbers up top, in the spirit of a controller's
+ *  primary status strip: download, upload, latency and loss at a glance. */
+function InternetHero({ data }: { data: DashboardData }) {
+  const metrics = data.wan?.metrics
+  const download = metrics?.download_bps.value
+  const upload = metrics?.upload_bps.value
+  const latency = metrics?.latency_ms.value
+  const loss = metrics?.loss_pct.value
+  return (
+    <section aria-label="Internet performance" className="dashboard-hero">
+      <div className="dashboard-hero-grid">
+        <Card>
+          <Stat label="Internet download" value={download != null ? formatRate(download) : '—'} sub="five-minute average" />
+        </Card>
+        <Card>
+          <Stat label="Internet upload" value={upload != null ? formatRate(upload) : '—'} sub="five-minute average" />
+        </Card>
+        <Card>
+          <Stat
+            label="Latency"
+            value={latency != null ? formatMilliseconds(latency) : '—'}
+            tone={latency != null ? (latency <= 40 ? 'good' : latency <= 120 ? 'warning' : 'critical') : 'muted'}
+            sub="gateway probe"
+          />
+        </Card>
+        <Card>
+          <Stat
+            label="Packet loss"
+            value={loss != null ? `${loss.toFixed(1)}%` : '—'}
+            tone={loss != null ? (loss === 0 ? 'good' : loss <= 5 ? 'warning' : 'critical') : 'muted'}
+            sub="gateway probe"
+          />
+        </Card>
+      </div>
+    </section>
+  )
+}
+
 export function Dashboard({
   data,
   onOpenTopology,
@@ -1080,6 +1118,8 @@ export function Dashboard({
           </Banner>
         </div>
       )}
+
+      <InternetHero data={data} />
 
       <div className="dashboard-operations-grid">
         <InternetHealth data={data} />

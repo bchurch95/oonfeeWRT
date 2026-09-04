@@ -14,6 +14,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  bootstrap:
+    name: Bootstrap / setup.sh one-liner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Proves the documented one-liner works on a clean runner and that the
+    # toolchain setup.sh installs is sufficient to build the project. Kept
+    # separate from the test jobs so those keep their Go/npm dependency caches.
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install all prerequisites via setup.sh
+        run: ./setup.sh
+      - name: Verify the provisioned toolchain
+        run: |
+          go version
+          node --version
+          npm --version
+          make --version | head -n1
+          gawk --version | head -n1
+          gcc --version | head -n1
+          python3 -c 'import distutils; print("distutils ok")'
+      - name: Build using only the setup.sh-provisioned toolchain
+        run: make build
+
   go:
     name: Go / test, vet, modules
     runs-on: ubuntu-24.04

@@ -201,7 +201,8 @@ describe('App session boundaries', () => {
     render(<App />)
 
     const navigation = await screen.findByRole('navigation', { name: 'Main navigation' })
-    expect(navigation.style.width).toBe('64px')
+    // The sidebar rests expanded: labels and section groups are the default.
+    expect(navigation.style.width).toBe('208px')
     const routeNames = [
       'Dashboard', 'Topology', 'Radios', 'Devices', 'Client Devices',
       'Policy Engine', 'Settings', 'Adopt a device', 'Logs',
@@ -210,39 +211,43 @@ describe('App session boundaries', () => {
       const button = screen.getByRole('button', { name })
       expect(button.querySelector('svg')?.getAttribute('width')).toBe('24')
       expect(button.getAttribute('title')).toBe(name)
-      expect(button.style.minHeight).toBe('44px')
+      expect(button.style.minHeight).toBe('40px')
       expect(button.classList.contains('app-nav-item')).toBe(true)
     }
-    const divider = screen.getByRole('separator', { name: 'Controller tools' })
-    expect(divider.getAttribute('data-expanded')).toBe('false')
-    expect(divider.nextElementSibling).toBe(screen.getByRole('button', { name: 'Settings' }))
+    // The sidebar is grouped into labelled sections; each renders a labelled
+    // separator that leads its group.
+    const overview = screen.getByRole('separator', { name: 'Overview' })
+    expect(overview.getAttribute('data-expanded')).toBe('true')
+    expect(overview.nextElementSibling).toBe(screen.getByRole('button', { name: 'Dashboard' }))
+    expect(screen.getByRole('separator', { name: 'Network' })).toBeTruthy()
+    expect(screen.getByRole('separator', { name: 'System' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Dashboard' }).getAttribute('aria-current')).toBe('page')
 
-    const expand = screen.getByRole('button', { name: 'Expand navigation' })
-    expect(expand.getAttribute('aria-expanded')).toBe('false')
-    fireEvent.click(expand)
+    const collapse = screen.getByRole('button', { name: 'Collapse navigation' })
+    expect(collapse.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.click(collapse)
 
-    expect(navigation.style.width).toBe('208px')
-    expect(screen.getByRole('button', { name: 'Collapse navigation' }).getAttribute('aria-expanded')).toBe('true')
-    expect(divider.getAttribute('data-expanded')).toBe('true')
-    expect(divider.textContent).toBe('Controller')
-    expect(screen.getByText('Dashboard')).toBeTruthy()
+    expect(navigation.style.width).toBe('64px')
+    expect(screen.getByRole('button', { name: 'Expand navigation' }).getAttribute('aria-expanded')).toBe('false')
+    expect(overview.getAttribute('data-expanded')).toBe('false')
     const key = `oonfeewrt:navigation:expanded:${encodeURIComponent(window.location.origin)}:admin`
-    expect(window.localStorage.getItem(key)).toBe('true')
+    expect(window.localStorage.getItem(key)).toBe('false')
   })
 
   it('restores only the signed-in account navigation preference', async () => {
     const adminKey = `oonfeewrt:navigation:expanded:${encodeURIComponent(window.location.origin)}:admin`
-    window.localStorage.setItem(adminKey, 'true')
+    window.localStorage.setItem(adminKey, 'false')
     signedIn('viewer')
     const first = render(<App />)
 
-    expect(await screen.findByRole('button', { name: 'Expand navigation' })).toBeTruthy()
+    // No stored preference for this account, so it rests expanded.
+    expect(await screen.findByRole('button', { name: 'Collapse navigation' })).toBeTruthy()
     first.unmount()
 
     signedIn('admin')
     render(<App />)
-    expect(await screen.findByRole('button', { name: 'Collapse navigation' })).toBeTruthy()
+    // admin explicitly collapsed the sidebar last session.
+    expect(await screen.findByRole('button', { name: 'Expand navigation' })).toBeTruthy()
   })
 
   it('keeps navigation available when one screen fails to render', async () => {

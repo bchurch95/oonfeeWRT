@@ -21,18 +21,45 @@ import { getAppTitle } from './lib/brand'
 
 type Screen = 'dashboard' | 'topology' | 'radios' | 'devices' | 'clients' | 'policy' | 'settings' | 'adopt' | 'logs' | 'firmware'
 
-const NAV: { id: Screen; label: string; icon: NavigationIconName }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { id: 'topology', label: 'Topology', icon: 'topology' },
-  { id: 'radios', label: 'Radios', icon: 'radios' },
-  { id: 'devices', label: 'Devices', icon: 'devices' },
-  { id: 'clients', label: 'Client Devices', icon: 'clients' },
-  { id: 'policy', label: 'Policy Engine', icon: 'policy' },
-  { id: 'settings', label: 'Settings', icon: 'settings' },
-  { id: 'adopt', label: 'Adopt a device', icon: 'adopt' },
-  { id: 'logs', label: 'Logs', icon: 'logs' },
-  { id: 'firmware', label: 'Firmware Builder', icon: 'firmware' },
+interface NavItem {
+  id: Screen
+  label: string
+  icon: NavigationIconName
+}
+
+// Grouped the way an operator thinks: look at the network, then act on it.
+const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Overview',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+      { id: 'topology', label: 'Topology', icon: 'topology' },
+    ],
+  },
+  {
+    label: 'Network',
+    items: [
+      { id: 'devices', label: 'Devices', icon: 'devices' },
+      { id: 'clients', label: 'Client Devices', icon: 'clients' },
+      { id: 'radios', label: 'Radios', icon: 'radios' },
+    ],
+  },
+  {
+    label: 'Control',
+    items: [{ id: 'policy', label: 'Policy Engine', icon: 'policy' }],
+  },
+  {
+    label: 'System',
+    items: [
+      { id: 'adopt', label: 'Adopt a device', icon: 'adopt' },
+      { id: 'firmware', label: 'Firmware Builder', icon: 'firmware' },
+      { id: 'logs', label: 'Logs', icon: 'logs' },
+      { id: 'settings', label: 'Settings', icon: 'settings' },
+    ],
+  },
 ]
+
+const NAV: NavItem[] = NAV_SECTIONS.flatMap((section) => section.items)
 
 function navigationPreferenceKey(username: string) {
   return `oonfeewrt:navigation:expanded:${encodeURIComponent(window.location.origin)}:${encodeURIComponent(username)}`
@@ -40,9 +67,10 @@ function navigationPreferenceKey(username: string) {
 
 function readNavigationPreference(username: string) {
   try {
-    return window.localStorage.getItem(navigationPreferenceKey(username)) === 'true'
+    // Expanded is the resting state; only a stored 'false' collapses it.
+    return window.localStorage.getItem(navigationPreferenceKey(username)) !== 'false'
   } catch {
-    return false
+    return true
   }
 }
 
@@ -94,6 +122,9 @@ export function App() {
   const [screen, setScreen] = useState<Screen>(() => screenFromPath(window.location.pathname))
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [navigationExpanded, setNavigationExpanded] = useState(false)
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 719px)').matches,
+  )
 
   const [dash, setDash] = useState<DashboardData | null>(null)
   const [devices, setDevices] = useState<Device[]>([])
@@ -137,6 +168,17 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
+
+  // Below the mobile breakpoint the sidebar is forced to its icon rail so the
+  // content keeps its width; the stored preference still applies once the
+  // viewport is wide enough.
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 719px)')
+    const follow = () => setNarrow(query.matches)
+    follow()
+    query.addEventListener('change', follow)
+    return () => query.removeEventListener('change', follow)
+  }, [])
 
   useEffect(() => {
     const followHistory = () => setScreen(screenFromPath(window.location.pathname))
@@ -269,25 +311,44 @@ export function App() {
     )
   }
 
-  const navigationWidth = navigationExpanded ? 208 : 64
+  const navExpanded = navigationExpanded && !narrow
+  const navigationWidth = navExpanded ? 208 : 64
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <header
         style={{
-          height: 40,
-          flex: '0 0 40px',
+          height: 52,
+          flex: '0 0 52px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 14px',
+          padding: '0 18px',
           background: 'var(--surface-1)',
           borderBottom: '1px solid var(--border)',
         }}
       >
-        <strong style={{ fontSize: 13 }}>{appTitle}</strong>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span
+            aria-hidden
+            style={{
+              width: 26,
+              height: 26,
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: 7,
+              background: 'var(--control-accent)',
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 700,
+            }}
+          >
+            <NavigationIcon name="topology" />
+          </span>
+          <strong style={{ fontSize: 15, letterSpacing: '.01em' }}>{appTitle}</strong>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12 }}>
           <button
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
             aria-label={`${theme === 'dark' ? 'Dark' : 'Light'} theme active; switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
@@ -296,7 +357,37 @@ export function App() {
           >
             ◐
           </button>
-          <span style={{ color: 'var(--text-secondary)' }}>{username}</span>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '4px 10px',
+              borderRadius: 999,
+              border: '1px solid var(--border)',
+              background: 'var(--surface-2)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                width: 18,
+                height: 18,
+                display: 'grid',
+                placeItems: 'center',
+                borderRadius: '50%',
+                background: 'var(--accent-soft)',
+                color: 'var(--accent-text)',
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+              }}
+            >
+              {username.slice(0, 1)}
+            </span>
+            {username}
+          </span>
           <button
             disabled={signingOut}
             onClick={async () => {
@@ -330,88 +421,90 @@ export function App() {
             flex: `0 0 ${navigationWidth}px`,
             background: 'var(--surface-1)',
             borderRight: '1px solid var(--border)',
-            padding: '8px 0',
+            padding: '6px 8px',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            gap: 4,
+            alignItems: navExpanded ? 'stretch' : 'center',
+            gap: 2,
             overflowX: 'hidden',
             overflowY: 'auto',
           }}
         >
+          {NAV_SECTIONS.map((section) => (
+            <Fragment key={section.label}>
+              <div
+                className="app-nav-divider"
+                data-expanded={navExpanded}
+                role="separator"
+                aria-label={section.label}
+              >
+                {navExpanded && <span>{section.label}</span>}
+              </div>
+              {section.items.map((n) => (
+                <button
+                  key={n.id}
+                  className="app-nav-item"
+                  type="button"
+                  title={n.label}
+                  aria-label={n.label}
+                  aria-current={screen === n.id ? 'page' : undefined}
+                  onClick={() => navigate(n.id)}
+                  style={{
+                    width: navExpanded ? '100%' : 44,
+                    minHeight: 40,
+                    padding: navExpanded ? '0 10px' : 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: navExpanded ? 'flex-start' : 'center',
+                    gap: 10,
+                    flex: '0 0 auto',
+                    borderRadius: 8,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: screen === n.id ? 650 : 500,
+                    fontSize: 13,
+                  }}
+                >
+                  <NavigationIcon name={n.icon} />
+                  {navExpanded && <span style={{ whiteSpace: 'nowrap' }}>{n.label}</span>}
+                </button>
+              ))}
+            </Fragment>
+          ))}
+          <div style={{ flex: 1 }} />
           <button
             className="app-nav-control"
             type="button"
-            aria-label={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
-            aria-expanded={navigationExpanded}
-            title={navigationExpanded ? 'Collapse navigation' : 'Expand navigation'}
+            aria-label={navExpanded ? 'Collapse navigation' : 'Expand navigation'}
+            aria-expanded={navExpanded}
+            title={navExpanded ? 'Collapse navigation' : 'Expand navigation'}
             onClick={() => {
               const next = !navigationExpanded
               setNavigationExpanded(next)
               writeNavigationPreference(username, next)
             }}
             style={{
-              width: navigationExpanded ? 'calc(100% - 16px)' : 44,
-              minHeight: 44,
-              padding: navigationExpanded ? '0 10px' : 0,
+              width: navExpanded ? '100%' : 44,
+              minHeight: 40,
+              padding: navExpanded ? '0 10px' : 0,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: navigationExpanded ? 'flex-start' : 'center',
+              justifyContent: navExpanded ? 'flex-start' : 'center',
               gap: 10,
               flex: '0 0 auto',
               borderRadius: 8,
               border: '1px solid var(--border)',
               color: 'var(--text-secondary)',
               cursor: 'pointer',
-              marginBottom: 4,
+              fontSize: 13,
             }}
           >
-            <NavigationIcon name={navigationExpanded ? 'collapse' : 'expand'} />
-            {navigationExpanded && <span style={{ whiteSpace: 'nowrap' }}>Collapse</span>}
+            <NavigationIcon name={navExpanded ? 'collapse' : 'expand'} />
+            {navExpanded && <span style={{ whiteSpace: 'nowrap' }}>Collapse</span>}
           </button>
-          {NAV.map((n) => (
-            <Fragment key={n.id}>
-              {n.id === 'settings' && (
-                <div
-                  className="app-nav-divider"
-                  data-expanded={navigationExpanded}
-                  role="separator"
-                  aria-label="Controller tools"
-                >
-                  {navigationExpanded && <span>Controller</span>}
-                </div>
-              )}
-              <button
-                className="app-nav-item"
-                type="button"
-                title={n.label}
-                aria-label={n.label}
-                aria-current={screen === n.id ? 'page' : undefined}
-                onClick={() => navigate(n.id)}
-                style={{
-                  width: navigationExpanded ? 'calc(100% - 16px)' : 44,
-                  minHeight: 44,
-                  padding: navigationExpanded ? '0 10px' : 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: navigationExpanded ? 'flex-start' : 'center',
-                  gap: 10,
-                  flex: '0 0 auto',
-                  borderRadius: 8,
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: screen === n.id ? 'inset 3px 0 0 var(--accent)' : 'none',
-                  fontWeight: screen === n.id ? 650 : 500,
-                }}
-              >
-                <NavigationIcon name={n.icon} />
-                {navigationExpanded && <span style={{ whiteSpace: 'nowrap' }}>{n.label}</span>}
-              </button>
-            </Fragment>
-          ))}
         </nav>
 
-        <main ref={mainRef} id="main-content" tabIndex={-1} style={{ flex: 1, overflow: 'auto', padding: 14, minWidth: 0, outline: 'none' }}>
+        <main ref={mainRef} id="main-content" tabIndex={-1} style={{ flex: 1, overflow: 'auto', padding: 20, minWidth: 0, outline: 'none' }}>
           {accountErr && (
             <div style={{ marginBottom: 12 }}>
               <div role="alert"><Banner tone="critical">{accountErr}</Banner></div>

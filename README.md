@@ -253,7 +253,16 @@ Detailed hardware evidence and known gaps are in the
 
 ## Build from source
 
-Go 1.26.6 and Node.js 22 are the release toolchain.
+Go 1.26.6 and Node.js 22 are the release toolchain. On a Debian/Ubuntu host, one
+script installs every prerequisite (base toolchain, the exact Go and Node
+versions, and the OpenWrt image-builder dependencies the Firmware Builder needs):
+
+```sh
+./setup.sh --build     # install prerequisites, then build oonfeewrtd
+```
+
+`./setup.sh` is idempotent and safe to re-run; `make setup` does the same. To
+verify the toolchain without building, run `make check`:
 
 ```sh
 make check

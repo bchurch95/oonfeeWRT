@@ -6,10 +6,11 @@ IMAGE ?= oonfeewrt:$(VERSION)
 PLATFORMS ?= linux/amd64,linux/arm64
 RELEASE_DIR ?= dist
 
-.PHONY: help ui build test check image release release-check
+.PHONY: help setup ui build test check image release release-check
 
 help:
 	@printf '%s\n' \
+		'make setup                             install all build/run prerequisites (Debian/Ubuntu)' \
 		'make ui                              build the embedded UI' \
 		'make build                           build the host controller binary' \
 		'make test                            run Go and UI tests' \
@@ -17,6 +18,9 @@ help:
 		'make image                           build the amd64/arm64 OCI image' \
 		'make release RELEASE_VERSION=        package four release binaries' \
 		'make release-check RELEASE_VERSION=  require a clean, reproducible release tree'
+
+setup:
+	./setup.sh
 
 ui:
 	npm --prefix ui ci

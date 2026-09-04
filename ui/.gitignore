@@ -7,3 +7,4 @@ dist/*
 
 # Scratch output from `npm run check:columns`.
 .check/
+.visual/

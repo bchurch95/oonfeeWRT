@@ -12,39 +12,39 @@
 
 :root,
 [data-theme='dark'] {
-  --surface-0: #0f1114;
-  --surface-1: #16181c;
-  --surface-2: #1e2126;
-  --border: #2a2e35;
+  --surface-0: #141619;
+  --surface-1: #1d2025;
+  --surface-2: #262a31;
+  --border: #2e333b;
   /* Interactive boundaries stay >=3:1 against every dark surface. */
-  --border-strong: #666d78;
+  --border-strong: #5f6873;
 
-  --text-primary: #f2f4f7;
-  --text-secondary: #a0a6b0;
+  --text-primary: #eef1f5;
+  --text-secondary: #a8b0bb;
   /* Small muted copy stays >=4.5:1 against every dark surface. */
-  --text-muted: #808894;
+  --text-muted: #9aa2ae;
 
-  --accent: #3987e5;
-  --accent-soft: #1d3b63;
+  --accent: #4c8dff;
+  --accent-soft: #1b2c49;
   /* Normal-size accent copy stays >=4.5:1 on accent-soft and surfaces. */
-  --accent-text: #78b6ff;
+  --accent-text: #8db5ff;
   /* White text on the ordinary accent misses 4.5:1; filled controls use this. */
-  --control-accent: #1f6fc8;
-  --selection-border: #3987e5;
+  --control-accent: #2266c2;
+  --selection-border: #4c8dff;
 
-  --good: #199e70;
-  --warning: #c98500;
-  --serious: #d95926;
-  --critical: #e66767;
+  --good: #2fbf71;
+  --warning: #e8a13c;
+  --serious: #e8763a;
+  --critical: #ef6464;
 
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-4: #c98500;
+  --series-1: #4c8dff;
+  --series-2: #e8763a;
+  --series-3: #2fbf71;
+  --series-4: #e8a13c;
   --series-5: #d55181;
   --series-6: #008300;
   --series-7: #9085e9;
-  --series-8: #e66767;
+  --series-8: #ef6464;
 }
 
 /* Light is SELECTED, not an inverted flip: every series colour is the
@@ -63,7 +63,7 @@
   --text-muted: #656c78;
 
   --accent: #2a78d6;
-  --accent-soft: #d7e6fa;
+  --accent-soft: #dbe7fb;
   --accent-text: #1d5fae;
   --control-accent: #246bc0;
   --selection-border: #2a78d6;
@@ -117,28 +117,30 @@
 
 .app-nav-item[aria-current='page'] {
   background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
   color: var(--accent-text);
 }
 
 .app-nav-divider {
   display: flex;
-  width: calc(100% - 16px);
+  width: 100%;
   height: 1px;
   flex: 0 0 auto;
   align-items: center;
   gap: 7px;
-  margin: 5px 0;
-  background: var(--border);
+  margin: 4px 0 2px;
+  background: transparent;
 }
 
 .app-nav-divider[data-expanded='true'] {
-  height: 18px;
-  padding-left: 2px;
+  height: 20px;
+  margin-top: 12px;
+  padding: 0 10px 0 2px;
   background: transparent;
   color: var(--text-muted);
   font-size: 10px;
   font-weight: 650;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -190,6 +192,16 @@ a {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* A screen change moves focus to the page heading for screen readers. The
+ * heading is the landmark, so it does not also paint a focus ring over the
+ * whole title block. */
+.page-header h1:focus,
+.page-header h1:focus-visible,
+.dashboard-page-heading h1:focus,
+.dashboard-page-heading h1:focus-visible {
+  outline: none;
 }
 
 .page-header {
@@ -1483,6 +1495,12 @@ a {
   gap: 10px;
 }
 
+.dashboard-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+}
+
 .dashboard-health-state {
   color: var(--text-secondary);
   font-size: 11px;
@@ -2235,7 +2253,8 @@ a {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .dashboard-stat-grid {
+  .dashboard-stat-grid,
+  .dashboard-hero-grid {
     grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
   }
 }
