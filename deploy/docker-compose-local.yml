@@ -1,0 +1,44 @@
+# oonfeeWRT controller — local build
+services:
+  oonfeewrt:
+    image: oonfeewrt:dev
+    container_name: oonfeewrt
+    restart: unless-stopped
+
+    ports:
+      - 127.0.0.1:8080:8080
+
+    volumes:
+      - oonfee-data:/data
+      - type: bind
+        source: ./passphrase
+        target: /run/secrets/oonfee-passphrase
+        read_only: true
+        bind:
+          create_host_path: false
+
+    environment:
+      OONFEE_DATA_DIR: /data
+      OONFEE_LISTEN: :8080
+      OONFEE_PASSPHRASE_FILE: /run/secrets/oonfee-passphrase
+
+    user: 65532:65532
+
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,uid=65532,gid=65532,mode=0700
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    healthcheck:
+      test: [CMD, /oonfeewrtd, -healthcheck]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+    stop_grace_period: 150s
+
+volumes:
+  oonfee-data:
