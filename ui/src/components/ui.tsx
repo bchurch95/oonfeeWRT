@@ -10,29 +10,25 @@ export { orderColumns, moveColumn }
  *  status a genuine accessibility flaw and says not to inherit it, so the text
  *  always ships alongside. */
 export function Status({ value }: { value: string }) {
-  const colour =
-    value === 'measured'
-      ? 'var(--accent)'
-      : value === 'online' || value === 'wireless'
-      ? 'var(--good)'
-      : value === 'offline' || value === 'blocked'
-        ? 'var(--critical)'
-        : value === 'pending' || value === 'ambiguous'
-          ? 'var(--warning)'
-          : 'var(--text-muted)'
+  const tone =
+    value === 'measured' ? 'accent' :
+    value === 'online' || value === 'wireless' ? 'good' :
+    value === 'offline' || value === 'blocked' ? 'critical' :
+    value === 'pending' || value === 'ambiguous' ? 'warning' : 'muted'
+  const colors = {
+    accent: 'bg-theme-accent',
+    good: 'bg-theme-good',
+    critical: 'bg-theme-critical',
+    warning: 'bg-theme-warning',
+    muted: 'text-theme-muted bg-transparent',
+  }
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+    <span className="inline-flex items-center gap-2.5">
       <span
         aria-hidden
-        style={{
-          width: 7,
-          height: 7,
-          borderRadius: '50%',
-          background: colour,
-          flex: '0 0 auto',
-        }}
+        className={`w-1.75 h-1.75 rounded-full ${colors[tone] === 'text-theme-muted bg-transparent' ? 'border border-current' : colors[tone]}`}
       />
-      <span>{value}</span>
+      <span className="text-sm text-theme-text-secondary">{value}</span>
     </span>
   )
 }
@@ -47,12 +43,12 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <header className="page-header">
-      <div className="page-header-copy">
-        <h1>{title}</h1>
-        <div className="page-header-purpose">{purpose}</div>
+    <header className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+      <div className="flex-1 min-w-0">
+        <h1 className="text-2xl font-semibold text-theme-text-primary mb-1">{title}</h1>
+        <p className="text-sm text-theme-text-secondary">{purpose}</p>
       </div>
-      {actions != null && <div className="page-header-actions">{actions}</div>}
+      {actions != null && <div className="flex flex-wrap gap-2">{actions}</div>}
     </header>
   )
 }
@@ -69,14 +65,14 @@ export function Card({
   pad?: boolean
 }) {
   return (
-    <section className="ui-card">
+    <section className="ui-card bg-theme-surface-1 border border-theme-border rounded-xl overflow-hidden shadow-card">
       {title && (
-        <header className="ui-card-header">
-          <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{title}</span>
-          {actions}
+        <header className="ui-card-header px-6 py-4 border-b border-theme-border flex justify-between items-center">
+          <span className="flex-1 min-w-0 overflow-wrap-anywhere text-theme-text-primary font-medium">{title}</span>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
         </header>
       )}
-      <div className="ui-card-body" data-padded={pad}>{children}</div>
+      <div className={`ui-card-body ${pad ? 'p-6' : ''}`} data-padded={pad}>{children}</div>
     </section>
   )
 }
@@ -97,18 +93,23 @@ export function Stat({
    *  an explanation two cards away does not get read. */
   sub?: ReactNode
 }) {
-  const colour = tone ? `var(--${tone === 'muted' ? 'text-muted' : tone})` : undefined
+  const colors = {
+    good: 'text-theme-good',
+    warning: 'text-theme-warning',
+    critical: 'text-theme-critical',
+    muted: 'text-theme-muted',
+  }
+  const colorClass = tone ? colors[tone] : 'text-theme-text-primary'
   return (
     <div className="ui-stat">
-      <div className="ui-stat-label">{label}</div>
+      <div className="ui-stat-label text-xs text-theme-text-secondary mb-1 font-medium">{label}</div>
       <div
-        className="ui-stat-value num"
-        style={{ color: colour }}
+        className={`ui-stat-value num text-lg font-semibold ${colorClass}`}
       >
         {value}
       </div>
       {sub != null && (
-        <div className="ui-stat-note">
+        <div className="ui-stat-note text-xs text-theme-text-muted mt-1">
           {sub}
         </div>
       )}
@@ -137,9 +138,13 @@ export function Button({
   'aria-describedby'?: string
   'aria-pressed'?: boolean
 }) {
+  const baseClasses = "inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-accent disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+  const kindClasses = kind === 'primary' 
+    ? "bg-theme-accent hover:bg-theme-accent-hover text-white shadow-sm hover:shadow-md" 
+    : "bg-theme-surface-2 hover:bg-theme-surface-3 text-theme-text-primary border border-theme-border hover:border-theme-border-strong"
   return (
     <button
-      className="ui-button"
+      className={`${baseClasses} ${kindClasses}`}
       data-kind={kind}
       type={type}
       aria-label={ariaLabel}
@@ -163,22 +168,12 @@ export function Field({
 }: { label: string } & React.ComponentPropsWithRef<'input'>) {
   return (
     <label style={{ display: 'block' }}>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+      <div style={{ fontSize: 12, color: 'var(--theme-text-secondary)', marginBottom: 4 }}>
         {label}
       </div>
       <input
         {...props}
-        style={{
-          width: '100%',
-          height: 36,
-          padding: '0 10px',
-          borderRadius: 6,
-          background: 'var(--surface-0)',
-          border: '1px solid var(--border-strong)',
-          color: 'var(--text-primary)',
-          fontSize: 13,
-          ...style,
-        }}
+        className="w-full px-4 py-2.5 rounded-lg bg-theme-surface-0 border border-theme-border-strong text-theme-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent transition-all"
       />
     </label>
   )
@@ -190,23 +185,13 @@ export function TextAreaField({
 }: { label: string } & React.ComponentPropsWithRef<'textarea'>) {
   return (
     <label style={{ display: 'block' }}>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+      <div style={{ fontSize: 12, color: 'var(--theme-text-secondary)', marginBottom: 4 }}>
         {label}
       </div>
       <textarea
         rows={5}
         {...props}
-        style={{
-          width: '100%',
-          padding: '8px 10px',
-          borderRadius: 6,
-          resize: 'vertical',
-          background: 'var(--surface-0)',
-          border: '1px solid var(--border-strong)',
-          color: 'var(--text-primary)',
-          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-          fontSize: 12,
-        }}
+        className="w-full px-4 py-2.5 rounded-lg resize-vertical bg-theme-surface-0 border border-theme-border-strong text-theme-text-primary font-mono text-xs focus:outline-none focus:ring-2 focus:ring-theme-accent focus:border-transparent transition-all"
       />
     </label>
   )
@@ -222,7 +207,7 @@ export function Unknown({ why }: { why: string }) {
     <span className="unknown-value">
       <button
         type="button"
-        className="unknown-value-trigger"
+        className="unknown-value-trigger px-2 py-1 rounded bg-theme-surface-2 hover:bg-theme-surface-3 border border-theme-border text-theme-text-primary font-medium text-sm transition-colors"
         title={why}
         aria-label={`Unknown: ${why}`}
         aria-expanded={open}
@@ -242,7 +227,7 @@ export function Unknown({ why }: { why: string }) {
         —
       </button>
       {open && (
-        <span className="unknown-value-tooltip" role="tooltip">
+        <span className="unknown-value-tooltip absolute z-50 px-3 py-2 bg-theme-surface-1 border border-theme-border rounded shadow-lg text-sm text-theme-text-primary" role="tooltip">
           {why}
         </span>
       )}
@@ -338,7 +323,7 @@ export function DetailsPopover({
       <button
         ref={triggerRef}
         type="button"
-        className="details-popover-trigger"
+        className="details-popover-trigger px-3 py-1.5 rounded-lg bg-theme-surface-2 hover:bg-theme-surface-3 border border-theme-border text-theme-text-primary text-sm font-medium transition-colors"
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={panelID}
@@ -370,19 +355,19 @@ export function DetailsPopover({
         hidden={!supportsPopover && !open}
         onFocusCapture={() => { openMode.current = 'persistent' }}
       >
-        <div className="details-popover-heading">
-          <strong id={titleID}>{title}</strong>
+        <div className="details-popover-heading border-b border-theme-border pb-3 mb-3">
+          <strong id={titleID} className="text-theme-text-primary font-medium">{title}</strong>
           <button
             ref={closeRef}
             type="button"
-            className="details-popover-close"
+            className="details-popover-close bg-transparent border-none text-theme-text-secondary cursor-pointer text-xl leading-4 hover:text-theme-text-primary transition-colors"
             aria-label={`Close ${title}`}
             onClick={() => close(true)}
           >
             ×
           </button>
         </div>
-        <div className="details-popover-content">{children}</div>
+        <div className="details-popover-content text-theme-text-secondary">{children}</div>
       </div>
     </div>
   )
@@ -430,21 +415,23 @@ export function Notice({
     setInlineOpen(defaultOpen)
   }, [defaultOpen])
 
+  const toneStyles = {
+    accent: 'border-l-4 border-accent bg-accent/5 text-accent',
+    warning: 'border-l-4 border-warning bg-warning/5 text-warning',
+    critical: 'border-l-4 border-critical bg-critical/5 text-critical',
+  }
+  
+  const colorStyle = toneStyles[tone] || toneStyles.accent
+
   return (
     <div
-      className="notice"
-      data-tone={tone}
-      data-compact={compact ? 'true' : undefined}
-      data-actions={actions != null ? 'true' : undefined}
-      role="group"
-      aria-label={`${toneLabel}: ${component}`}
-    >
-      <div className="notice-context">
-        <span>{visibleToneLabel}</span>
+      className={`notice ${colorStyle} rounded-lg p-4 mb-4`}>
+      <div className="notice-context mb-2 flex items-center gap-2">
+        <span className="font-semibold">{visibleToneLabel}</span>
         <span aria-hidden="true">·</span>
         <span>{component}</span>
       </div>
-      <div className="notice-summary">{summary}</div>
+      <div className="notice-summary mb-2 font-medium">{summary}</div>
       {!popover ? (
         <details
           className="notice-disclosure"
@@ -452,15 +439,15 @@ export function Notice({
           open={inlineOpen}
           onToggle={(event) => setInlineOpen(event.currentTarget.open)}
         >
-          <summary aria-controls={detailsID} aria-expanded={inlineOpen}>
+          <summary aria-controls={detailsID} aria-expanded={inlineOpen} className="cursor-pointer text-theme-text-secondary font-medium">
             {inlineOpen ? openLabel : closedLabel}
           </summary>
-          <div id={detailsID} className="notice-inline-details">{details}</div>
+          <div id={detailsID} className="notice-inline-details mt-2">{details}</div>
         </details>
       ) : (
         <DetailsPopover
           className="notice-disclosure"
-          panelClassName="notice-details"
+          panelClassName="notice-details bg-theme-surface-1 rounded-lg p-4 border border-theme-border"
           triggerLabel={closedLabel}
           openTriggerLabel={openLabel}
           triggerAriaLabel={closedLabel === 'More information'
@@ -472,7 +459,7 @@ export function Notice({
           {details}
         </DetailsPopover>
       )}
-      {actions != null && <div className="notice-actions">{actions}</div>}
+      {actions != null && <div className="notice-actions mt-4">{actions}</div>}
     </div>
   )
 }
@@ -487,30 +474,26 @@ export function Banner({
   tone?: 'warning' | 'critical' | 'accent'
   children: ReactNode
 }) {
-  const colour = tone === 'accent' ? 'var(--accent)' : `var(--${tone})`
+  const colors = {
+    accent: 'border-accent text-accent bg-accent/5',
+    warning: 'border-warning text-warning bg-warning/5',
+    critical: 'border-critical text-critical bg-critical/5',
+  }
+  const colorClass = colors[tone] || colors.accent
   const text = bannerText(children).replace(/\s+/g, ' ').trim()
   const collapsible = text.length > 260 && !bannerHasAction(children)
   return (
     <div
-      style={{
-        borderColor: colour,
-        borderStyle: 'solid',
-        borderWidth: '1px 1px 1px 3px',
-        borderRadius: 6,
-        padding: '8px 12px',
-        fontSize: 12,
-        color: 'var(--text-primary)',
-        background: 'var(--surface-1)',
-      }}
+      className={`border-l-4 rounded-lg p-5 text-sm ${colorClass}`}
     >
       {collapsible ? (
         <details className="banner-details">
-          <summary style={{ cursor: 'pointer', color: 'var(--text-secondary)', overflowWrap: 'anywhere' }}>
+          <summary className="cursor-pointer text-theme-text-secondary overflow-wrap-anywhere font-medium">
             {truncateBannerText(text)}{' '}
-            <span className="banner-details-show" style={{ color: colour, fontWeight: 600 }}>Show details</span>
-            <span className="banner-details-hide" style={{ color: colour, fontWeight: 600 }}>Hide details</span>
+            <span className="banner-details-show">Show details</span>
+            <span className="banner-details-hide">Hide details</span>
           </summary>
-          <div style={{ marginTop: 8, overflowWrap: 'anywhere' }}>{children}</div>
+          <div className="mt-4 overflow-wrap-anywhere">{children}</div>
         </details>
       ) : children}
     </div>
@@ -730,8 +713,8 @@ export function DataGrid<T>({
 
   if (rows.length === 0) {
     return (
-      <div style={{ padding: 24, color: 'var(--text-secondary)', fontSize: 12 }}>
-        {empty}
+      <div className="flex flex-col items-center justify-center py-12 px-6 text-theme-text-secondary">
+        <p className="text-base">{empty}</p>
       </div>
     )
   }
@@ -773,19 +756,8 @@ export function DataGrid<T>({
               dragging.current = null
             }}
             title={onPrefsChange ? 'Drag to reorder' : undefined}
+            className={`sticky top-0 z-10 border-b border-theme-border p-3 font-semibold text-theme-text-secondary whitespace-nowrap cursor-${onPrefsChange ? 'grab' : 'default'} ${c.numeric ? 'text-right' : 'text-left'}`}
             style={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 1,
-              background: 'var(--surface-1)',
-              borderBottom: '1px solid var(--border)',
-              padding: '8px 12px',
-              textAlign: c.numeric ? 'right' : 'left',
-              fontSize: 11,
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              whiteSpace: 'nowrap',
-              cursor: onPrefsChange ? 'grab' : 'default',
               width: c.width,
               userSelect: 'none',
             }}
@@ -804,19 +776,7 @@ export function DataGrid<T>({
                       : { key: c.key, dir: 1 },
                   )
                 }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  margin: -4,
-                  padding: 4,
-                  border: 0,
-                  background: 'transparent',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                  font: 'inherit',
-                  fontWeight: 'inherit',
-                }}
+                className="inline-flex items-center gap-2 px-1 py-1 -ml-1 -mt-1 border-none bg-transparent text-inherit cursor-pointer font-inherit font-semibold text-theme-text-secondary hover:text-theme-text-primary transition-colors"
               >
                 {c.header}
                 {sort?.key === c.key && (
@@ -865,33 +825,20 @@ export function DataGrid<T>({
               onRowClick(row)
             }
           }}
-          style={{
-            cursor: onRowClick ? 'pointer' : 'default',
-            borderBottom: '1px solid var(--border)',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '')}
+          className={`cursor-${onRowClick ? 'pointer' : 'default'} border-b border-theme-border hover:bg-theme-surface-2 transition-colors`}
         >
           {shown.map((c) => {
             const cell = c.render(row)
             return (
               <td
                 key={c.key}
-                className={c.numeric ? 'num' : undefined}
-                // A clipped cell has to be recoverable. Only plain text can go
-                // in a title attribute, which is most of what gets clipped.
+                className={`p-2.5 ${ROW_HEIGHT}px h-[${ROW_HEIGHT}px] ${c.numeric ? 'text-right' : 'text-left'} whitespace-nowrap overflow-hidden text-ellipsis`}
                 title={typeof cell === 'string' ? cell : undefined}
                 style={{
-                  padding: '7px 12px',
-                  height: ROW_HEIGHT,
                   lineHeight: `${ROW_LINE_HEIGHT}px`,
-                  whiteSpace: 'nowrap',
-                  // Fixed layout does not grow a column to fit its content, so
-                  // without this a long value runs straight over its neighbour
-                  // — two columns of text on top of each other, both
-                  // unreadable. Clip instead.
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {cell}
@@ -901,8 +848,8 @@ export function DataGrid<T>({
         </tr>
       ))}
       {virtual && last < view.length && (
-        <tr style={{ height: (view.length - last) * rowH }} aria-hidden>
-          <td colSpan={shown.length} style={{ padding: 0, border: 'none' }} />
+        <tr aria-hidden>
+          <td colSpan={shown.length} />
         </tr>
       )}
     </tbody>
@@ -912,10 +859,8 @@ export function DataGrid<T>({
     <table
       aria-label={tableLabel}
       aria-rowcount={totalRows == null ? undefined : totalRows + 1}
+      className="w-full border-collapse text-sm"
       style={{
-        width: '100%',
-        borderCollapse: 'collapse',
-        fontSize: 13,
         tableLayout: virtual ? 'fixed' : 'auto',
       }}
     >
@@ -1001,64 +946,39 @@ function ColumnPicker<T>({
 
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        padding: '6px 12px',
-        borderBottom: '1px solid var(--border)',
-        fontSize: 11,
-        color: 'var(--text-muted)',
-      }}
+      className="flex items-center gap-3 px-3 py-2 border-b border-theme-border text-xs text-theme-text-muted"
     >
       <button
         onClick={() => setOpen((v) => !v)}
-        style={{
-          border: '1px solid var(--border-strong)',
-          background: 'var(--surface-2)',
-          color: 'var(--text-primary)',
-          borderRadius: 4,
-          padding: '2px 8px',
-          fontSize: 11,
-          cursor: 'pointer',
-        }}
+        className="border border-theme-border-strong bg-theme-surface-2 text-theme-text-primary rounded-md px-4 py-1 text-xs font-medium cursor-pointer hover:bg-theme-surface-3 transition-colors"
       >
         Customize columns{nHidden > 0 ? ` (${nHidden} hidden)` : ''}
       </button>
       {virtualized && (
-        <span title="Find-in-page only searches rendered rows.">
+        <span title="Find-in-page only searches rendered rows." className="text-xs">
           {rowCount.toLocaleString()} rows, drawn as you scroll — ⌘F searches
           only what is on screen
         </span>
       )}
       {open && (
         <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 10,
-            marginLeft: 4,
-          }}
+          className="flex flex-wrap gap-3 ml-1"
         >
           {columns.map((c, i) => (
             <span
               key={c.key}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}
+              className="inline-flex items-center gap-2"
             >
               <label
+                className="inline-flex items-center gap-2 cursor-pointer text-theme-text-secondary"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  cursor: c.required ? 'default' : 'pointer',
                   opacity: c.required ? 0.5 : 1,
-                  color: 'var(--text-secondary)',
+                  pointerEvents: c.required ? 'none' : undefined,
                 }}
                 title={c.required ? 'This column identifies the row.' : undefined}
               >
                 <input
                   type="checkbox"
-                  disabled={c.required}
                   checked={c.required || !hidden.has(c.key)}
                   onChange={() => {
                     const next = new Set(hidden)
@@ -1089,7 +1009,6 @@ function ColumnPicker<T>({
   )
 }
 
-/** One arrow in the column picker. */
 function MoveButton({
   label,
   title,
@@ -1108,15 +1027,11 @@ function MoveButton({
       aria-label={title}
       disabled={disabled}
       onClick={onClick}
+      className={`border-none bg-transparent text-theme-text-secondary cursor-pointer text-xs leading-1 ${
+        disabled ? 'text-theme-text-muted opacity-35 cursor-default' : ''
+      }`}
       style={{
-        border: 'none',
-        background: 'none',
-        color: disabled ? 'var(--text-muted)' : 'var(--text-secondary)',
-        cursor: disabled ? 'default' : 'pointer',
-        opacity: disabled ? 0.35 : 1,
-        padding: '0 1px',
-        fontSize: 9,
-        lineHeight: 1,
+        padding: '0 2px',
       }}
     >
       {label}
@@ -1238,12 +1153,7 @@ export function SlideOver({
         aria-hidden="true"
         data-slideover-backdrop
         onMouseDown={() => close.current()}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 19,
-          background: 'rgb(0 0 0 / 32%)',
-        }}
+        className="fixed inset-0 z-19 bg-black bg-opacity-32"
       />
       <div
         ref={ref}
@@ -1251,47 +1161,21 @@ export function SlideOver({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleID}
-        style={{
-          position: 'fixed',
-          top: 'var(--app-topbar-height)',
-          right: 0,
-          bottom: 0,
-          width: 'min(370px, 100vw)',
-          background: 'var(--surface-1)',
-          borderLeft: '1px solid var(--border)',
-          overflowY: 'auto',
-          zIndex: 20,
-        }}
+        className="fixed top-[var(--app-topbar-height)] right-0 bottom-0 w-[min(370px,100vw)] bg-theme-surface-1 border-l border-theme-border overflow-y-auto z-20 shadow-xl"
       >
         <header
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 14px',
-            borderBottom: '1px solid var(--border)',
-            position: 'sticky',
-            top: 0,
-            background: 'var(--surface-1)',
-          }}
+          className="flex items-center justify-between px-5 py-4 border-b border-theme-border sticky top-0 bg-theme-surface-1"
         >
-          <strong id={titleID} style={{ fontSize: 13 }}>{title}</strong>
+          <strong id={titleID} className="text-base font-medium text-theme-text-primary">{title}</strong>
           <button
             onClick={() => close.current()}
             aria-label="Close"
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: 18,
-              lineHeight: 1,
-            }}
+            className="bg-transparent border-none text-theme-text-secondary cursor-pointer text-xl leading-4 hover:text-theme-text-primary transition-colors"
           >
             ×
           </button>
         </header>
-        <div style={{ padding: 14, display: 'grid', gap: 14 }}>{children}</div>
+        <div className="p-5 grid gap-4">{children}</div>
       </div>
     </>
   )
@@ -1300,9 +1184,9 @@ export function SlideOver({
 /** A label/value row inside a slide-over. */
 export function Prop({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</span>
-      <span style={{ fontSize: 12, fontWeight: 500, textAlign: 'right' }}>
+    <div className="flex justify-between items-center gap-3 py-2 border-b border-theme-border last:border-0">
+      <span className="text-sm text-theme-text-secondary font-medium">{label}</span>
+      <span className="text-sm font-semibold text-right text-theme-text-primary">
         {children}
       </span>
     </div>
@@ -1335,25 +1219,16 @@ export function FilterRail({
       {groups.map((g, i) => (
         <fieldset
           key={g.label}
-          style={{
-            border: 0,
-            padding: 0,
-            margin: `${i === 0 ? 0 : 12}px 0 0`,
-            minWidth: 0,
-          }}
+          className="border-0 p-0"
+          style={{ margin: `${i === 0 ? 0 : 12}px 0 0`, minWidth: 0 }}
         >
           <legend
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              padding: 0,
-              marginBottom: 6,
-            }}
+            className="text-xs font-semibold text-text-secondary mb-2"
+            style={{ padding: 0, marginBottom: 6 }}
           >
             {g.label}
           </legend>
-          <div style={{ display: 'grid', gap: 3 }}>
+          <div className="grid gap-2">
             <FilterOption
               label="All"
               count={g.options.reduce((n, o) => n + o.count, 0)}
@@ -1372,7 +1247,7 @@ export function FilterRail({
           </div>
         </fieldset>
       ))}
-      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 12 }}>
+      <div className="text-xs text-text-muted mt-3">
         {counted === 'all'
           ? 'Counts are over every matching row, not the page on screen.'
           : 'Counts are over the rows loaded here, which is everything this ' +
@@ -1417,24 +1292,14 @@ function FilterOption({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '3px 7px',
-        borderRadius: 4,
-        border: `1px solid ${active ? 'var(--selection-border)' : 'transparent'}`,
-        cursor: 'pointer',
-        fontSize: 12,
-        fontWeight: active ? 600 : 400,
-        background: active ? 'var(--accent-soft)' : 'transparent',
-        color: 'var(--text-primary)',
-      }}
+      className={`flex justify-between items-center px-3 py-2 rounded-lg cursor-pointer text-sm font-medium transition-colors ${
+        active 
+          ? 'bg-theme-accent text-white' 
+          : 'bg-theme-surface-2 hover:bg-theme-surface-3 text-theme-text-primary border border-theme-border'
+      }`}
     >
       <span>{label}</span>
-      <span className="num" style={{ color: 'var(--text-secondary)' }}>
-        {count.toLocaleString()}
-      </span>
+      <span className="num">{count.toLocaleString()}</span>
     </button>
   )
 }
@@ -1454,24 +1319,17 @@ export function Pager({
   const from = total === 0 ? 0 : offset + 1
   const to = Math.min(offset + limit, total)
   return (
-    <div className="pager">
-      <span className="num">
+    <div className="pager flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+      <span className="num text-theme-text-secondary">
         {from.toLocaleString()}–{to.toLocaleString()} of {total.toLocaleString()}
       </span>
-      <div className="pager-spacer" />
-      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-        Rows
+      <div className="pager-spacer flex-1" />
+      <label className="inline-flex items-center gap-2">
+        <span className="text-sm text-theme-text-secondary">Rows</span>
         <select
           value={limit}
           onChange={(e) => onChange(Number(e.target.value), 0)}
-          style={{
-            background: 'var(--surface-0)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-strong)',
-            borderRadius: 4,
-            fontSize: 11,
-            padding: '1px 4px',
-          }}
+          className="px-3 py-2 bg-theme-surface-0 text-theme-text-primary border border-theme-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-theme-accent"
         >
           {[50, 100, 250, 500, 1000].map((n) => (
             <option key={n} value={n}>
@@ -1480,12 +1338,14 @@ export function Pager({
           ))}
         </select>
       </label>
-      <Button disabled={offset === 0} onClick={() => onChange(limit, Math.max(0, offset - limit))}>
-        Previous
-      </Button>
-      <Button disabled={to >= total} onClick={() => onChange(limit, offset + limit)}>
-        Next
-      </Button>
+      <div className="flex gap-2">
+        <Button disabled={offset === 0} onClick={() => onChange(limit, Math.max(0, offset - limit))}>
+          Previous
+        </Button>
+        <Button disabled={to >= total} onClick={() => onChange(limit, offset + limit)}>
+          Next
+        </Button>
+      </div>
     </div>
   )
 }
@@ -1511,22 +1371,25 @@ export function Toggle({
 }) {
   return (
     <label
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        fontSize: 12,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        marginTop: 3,
-      }}
+      className="flex items-center gap-3 cursor-pointer"
+      style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
     >
-      <input
-        type="checkbox"
-        checked={on}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
+      <div className="relative">
+        <input
+          type="checkbox"
+          checked={on}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.checked)}
+          className="peer sr-only"
+        />
+        <div className={`w-11 h-6 rounded-full transition-colors duration-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-theme-accent peer-focus:ring-offset-2 ${
+          on ? 'bg-theme-accent' : 'bg-theme-border'
+        }`}></div>
+        <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
+          on ? 'translate-x-7' : 'translate-x-0'
+        }`}></div>
+      </div>
+      <span className={disabled ? 'opacity-50' : ''}>{label}</span>
     </label>
   )
 }
