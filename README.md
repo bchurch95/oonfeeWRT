@@ -2,10 +2,10 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/public/logo-dark.svg" />
-  <img src="docs/public/logo-light.svg" alt="oonfeeWRT orbit mark" width="64" height="64" />
+  <img src="docs/public/logo-light.svg" alt="oonfeeWRT orbit mark" width="96" height="96" />
 </picture>
 
-Self-hosted, UniFi-inspired management for stock OpenWrt.
+**Self-hosted, UniFi-inspired management for stock OpenWrt**
 
 [![Release][release-badge]][release-url]
 [![CI][ci-badge]][ci-url]
@@ -21,161 +21,50 @@ Self-hosted, UniFi-inspired management for stock OpenWrt.
 [go-badge]: https://img.shields.io/badge/Go-1.26.6-00ADD8?style=flat&logo=go
 [node-badge]: https://img.shields.io/badge/Node.js-22-339933?style=flat&logo=nodedotjs
 
-**[Explore the complete documentation →][docs-url]**
-Capabilities, guided setup, safe configuration, operations, security,
-troubleshooting, and engineering reference—with full-text search and light/dark
-themes.
-
 ---
 
-<div align="center">
+<p align="center">
   <img src="docs/public/screenshots/dashboard-overview-dark.jpg" alt="oonfeeWRT Dashboard" width="800" />
-  <p><em>Fleet health, Internet observations, and topology with dedicated workspaces in the sidebar</em></p>
-</div>
+</p>
 
 ---
 
-oonfeeWRT is a controller, not firmware. It runs on your server, NAS, mini-PC,
-or Mac and manages OpenWrt devices through their existing interfaces. Your
-routers stay on stock OpenWrt and continue to work with LuCI.
+## 🚀 Quick Start
 
-**Docker is optional.** Run the standalone binary directly on a supported
-64-bit Linux or macOS host, or use the container/Compose setup. The controller
-does not need a dedicated machine and is not installed on the managed routers.
+| 🐳 **Docker** | 🚀 **Binary** | 🏗️ **Build** |
+|-------------|-------------|-------------|
+| `docker compose up -d` | `./oonfeewrtd` | `make build` |
+| [Instructions][docs-install] | [Download][release-url] | `./setup.sh --build` |
 
 ---
 
-## 🌟 What it provides
+## ✨ What it does
+
+oonfeeWRT manages OpenWrt routers through their existing interfaces—no firmware flashing required.
 
 <div align="center">
   <table>
     <tr>
-      <td align="center"><strong>📊 Dashboard</strong><br/>Fleet health, WAN reachability, topology</td>
-      <td align="center"><strong>📈 Statistics</strong><br/>WAN, system, interface, radio rollups</td>
-      <td align="center"><strong>🛡️ Configuration</strong><br/>Preview & Apply with rollback protection</td>
-      <td align="center"><strong>🔐 Security</strong><br/>Role-based accounts, encrypted backups</td>
+      <td align="center"><strong>📊 Dashboard</strong><br/>Fleet health, topology, Internet</td>
+      <td align="center"><strong>📈 Statistics</strong><br/>Traffic, ICMP, interface history</td>
+      <td align="center"><strong>🛡️ Preview & Apply</strong><br/>Safe config with rollback</td>
+      <td align="center"><strong>🔐 Security</strong><br/>RBAC, encrypted backups</td>
     </tr>
     <tr>
-      <td align="center"><strong>📱 Devices</strong><br/>Adoption, health monitoring, telemetry</td>
-      <td align="center"><strong>📡 Radios</strong><br/>Channel planning, RF tools, inventory</td>
-      <td align="center"><strong>👥 Clients</strong><br/>Inventory, observability, policies</td>
-      <td align="center"><strong>📜 Audit</strong><br/>Logs, diagnostics, backup & restore</td>
+      <td align="center"><strong>📱 Devices</strong><br/>Adoption, health, telemetry</td>
+      <td align="center"><strong>📡 Radios</strong><br/>Channel planning, RF tools</td>
+      <td align="center"><strong>👥 Clients</strong><br/>Inventory, policies, observability</td>
+      <td align="center"><strong>📜 Audit</strong><br/>Logs, diagnostics, restore</td>
     </tr>
   </table>
 </div>
 
 ---
 
-## 🛠️ Installation
+## 🎯 Why oonfeeWRT?
 
-oonfeeWRT supports two equivalent ways to run the controller:
-
-| Method | Supported hosts | Notes |
-|--------|----------------|-------|
-| 🚀 **Standalone binary** | `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64` | No Docker required; UI embedded in binary |
-| 🐳 **Container/Compose** | `linux/amd64`, `linux/arm64` | NAS, mini-PC, SBC, Docker Desktop |
-
-### Requirements
-
-A controller host must be able to reach each router's management address over
-SSH plus the selected HTTP or HTTPS `/ubus` endpoint. Remote sites need an
-existing routed management network or VPN.
-
-- **Minimum**: OpenWrt 21.02+ with SSH, `rpcd`, `uhttpd`, `/ubus` handler
-- **Recommended**: OpenWrt 24.10 or 25.12
-- **Hardware**: 64-bit host, 1 GB RAM, 2 GB free storage
-
-A 64-bit host with 1 GB of RAM and 2 GB of free storage is a practical starting
-point. The controller's engineering envelope is at most 256 MB steady-state RSS
-at 25 devices, 2% of one modern CPU core for an idle fleet, and 2 GB of disk at
-the full 13-month retention depth.
-
----
-
-### 📦 Run the standalone binary
-
-```bash
-# Create data directory
-install -d -m 0700 "$PWD/data"
-
-# Download and run
-./oonfeewrtd -data-dir "$PWD/data" -listen 127.0.0.1:8080
-
-# First start creates controller passphrase
-# Open http://127.0.0.1:8080 and create your owner account
-```
-
-For unattended startup, use `-passphrase-file` with a mode-`0600` file.
-
----
-
-### 🐳 Run with Docker Compose
-
-```bash
-# Create working directory
-install -d -m 0700 oonfeewrt
-cd oonfeewrt
-umask 077
-
-# Download Compose file (use v0.1.8 for v0.1.8 release)
-curl --fail --location \
-  --output docker-compose.yml \
-  https://raw.githubusercontent.com/aiden0rchad/oonfeeWRT/v0.1.8/deploy/docker-compose.yml
-
-# Create secure passphrase
-head -c 32 /dev/urandom | base64 > passphrase
-sudo chown 65532:65532 passphrase
-sudo chmod 600 passphrase
-
-# Optional: Custom network bind
-printf '%s\n' \
-  'OONFEE_VERSION=v0.1.8' \
-  'OONFEE_HTTP_BIND=127.0.0.1' > .env
-chmod 600 .env
-
-# Start
-docker compose up -d
-
-# Open http://127.0.0.1:8080
-```
-
-**Important**: The HTTP listener has no native TLS. Keep it on loopback or an
-isolated management network, and use a trusted reverse proxy for remote access.
-
-The `passphrase` file unlocks the controller keyring and is not your owner
-account password. Back it up with the controller state and keep both private.
-
-`docker compose down -v` deletes the named data volume.
-
----
-
-## 🔍 Preview
-
-Real dark-mode screenshots captured while preparing the v0.1.8 interface.
-
-<div align="center">
-  <img src="docs/public/screenshots/dashboard-overview-dark.jpg" alt="Dashboard" width="400" />
-  <img src="docs/public/screenshots/statistics-internet-dark.jpg" alt="Statistics" width="400" />
-  <p><em>Fleet health and Internet observations with detailed statistics</em></p>
-</div>
-
-<div align="center">
-  <img src="docs/public/screenshots/accounts-manage-dark.jpg" alt="Accounts" width="400" />
-  <img src="docs/public/screenshots/devices-inventory-dark.jpg" alt="Devices" width="400" />
-  <p><em>Dedicated Accounts workspace and device inventory management</em></p>
-</div>
-
-[Explore the visual tour and illustrated guides][docs-url] for a screen-by-screen
-walkthrough and the capture dates and evidence limits.
-
----
-
-## 📊 Feature comparison
-
-oonfeeWRT focuses on what matters for real-world OpenWrt deployments:
-
-| Capability | oonfeeWRT | Cloud services |
-|------------|-----------|----------------|
+| Feature | oonfeeWRT | Cloud Services |
+|---------|-----------|----------------|
 | **Self-hosted** | ✅ | ❌ |
 | **OpenWrt native** | ✅ | Limited |
 | **No firmware flash** | ✅ | Often required |
@@ -186,101 +75,152 @@ oonfeeWRT focuses on what matters for real-world OpenWrt deployments:
 
 ---
 
-## 🔐 Safety model
+## 📚 Documentation
 
-- **Apply uses `uci.apply`** with a rollback window, then confirms only after
-  the controller can read the expected state
-- **Ownership tags** restrict ordinary writes and cleanup to controller-created
-  sections
-- **Explicit review** required for RF scans, speed tests, capability installation
-- **Monitor-only mode** excludes devices from desired configuration changes
-- **Encrypted backups** with separate passphrase that's never stored
-- **No automatic changes**—router writes only happen after explicit Preview + Apply
+**[Explore the complete documentation site →][docs-url]**
+
+- [Getting started][docs-install] — Installation and first adoption
+- [Visual tour][docs-vt] — Screen-by-screen walkthrough
+- [Installation guide][docs-install] — Binary, Docker, upgrades
+- [Release notes][docs-rel] — Version history
+- [Architecture][docs-arch] — Security and design
+- [Hardware validation][docs-validate] — Supported devices
+- [Feature parity][docs-parity] — Capabilities matrix
+- [Roadmap][docs-roadmap] — Future plans
 
 ---
 
-## 🛡️ First adoption
+## 🧪 Validation
 
-1. **Set a router root password** (if not already):
+- **Hardware**: Linksys WRT3200ACM, TP-Link Archer C6 v2 (OpenWrt 25.12.5)
+- **Additional**: Cudy M3000 v2/MT7981 Filogic (read-only)
+- **Status**: End-to-end validation on physical devices
 
+---
+
+## 🛠️ Installation
+
+### 🐳 Docker Compose
+
+```bash
+install -d -m 0700 oonfeewrt
+cd oonfeewrt
+umask 077
+
+curl --fail --location \
+  --output docker-compose.yml \
+  https://raw.githubusercontent.com/aiden0rchad/oonfeeWRT/v0.1.8/deploy/docker-compose.yml
+
+head -c 32 /dev/urandom | base64 > passphrase
+sudo chown 65532:65532 passphrase
+sudo chmod 600 passphrase
+
+printf '%s\n' \
+  'OONFEE_VERSION=v0.1.8' \
+  'OONFEE_HTTP_BIND=127.0.0.1' > .env
+chmod 600 .env
+
+docker compose up -d
+```
+
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080)
+
+### 🚀 Standalone Binary
+
+```bash
+install -d -m 0700 "$PWD/data"
+./oonfeewrtd -data-dir "$PWD/data" -listen 127.0.0.1:8080
+```
+
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080)
+
+### 🏗️ Build from Source
+
+```bash
+./setup.sh --build
+./oonfeewrtd -data-dir "$PWD/.run" -listen 127.0.0.1:8080
+```
+
+---
+
+## 🔐 Safety Model
+
+- **Rollback protection**: Every Apply uses OpenWrt's rollback window
+- **Ownership tags**: Only controller-created sections are modified
+- **Explicit review**: RF scans, speed tests, capability installs require approval
+- **Monitor-only mode**: Exclude devices from configuration changes
+- **Encrypted backups**: Separate passphrase, never stored
+
+---
+
+## 🛡️ First Adoption
+
+1. **Set router password** (if needed):
    ```bash
-   ROUTER_ADDRESS=192.0.168.1
-   ssh -t root@"$ROUTER_ADDRESS" passwd
+   ssh -t root@ROUTER_IP passwd
    ```
 
-2. **In Devices**, add the router by address or run discovery scan
+2. **Add device** in Devices → enter address or use discovery
 
-3. **Inspect capabilities** and choose **Managed** or **Monitor only**
+3. **Choose mode**: Managed or Monitor only
 
-4. **Review controller-access payload**—Approve creates scoped login and ACL
+4. **Review payload** → Approve creates scoped login and ACL
 
-5. **Preview configuration** before Apply—router changes only happen after explicit approval
-
-Monitor-only devices receive the distinct read-only `oonfeewrt-monitor` ACL
-and are excluded from desired/site configuration changes.
+5. **Preview config** → Apply only after explicit approval
 
 ---
 
-## 🔄 Upgrade to v0.1.8
+## 📊 Preview
 
-v0.1.6, v0.1.7, and v0.1.8 use **schema 25**. Upgrading from v0.1.6 or v0.1.7
-adds no schema migration.
+<div align="center">
+  <img src="docs/public/screenshots/dashboard-overview-dark.jpg" alt="Dashboard" width="400" />
+  <img src="docs/public/screenshots/statistics-internet-dark.jpg" alt="Statistics" width="400" />
+</div>
+<div align="center">
+  <img src="docs/public/screenshots/accounts-manage-dark.jpg" alt="Accounts" width="400" />
+  <img src="docs/public/screenshots/devices-inventory-dark.jpg" alt="Devices" width="400" />
+</div>
+
+[Explore the visual tour][docs-vt] for detailed screenshots.
+
+---
+
+## 🔄 Upgrades
 
 ### From v0.1.6 or v0.1.7
 
 ```bash
-# Preserve verified backup and matching recovery unit
-# Replace controller with verified release
-# Keep same data volume and runtime passphrase
+# Preserve verified backup
+# Replace controller, keep same data volume
 # Refresh browser
-
-# No router changes happen automatically
+# No automatic router changes
 ```
 
 ### From v0.1.5
 
-Export and verify a portable backup first. v0.1.8 runs migrations from schema 23
-to 24 for persistent alert state, then schema 25 for encrypted AdGuard Home settings.
+Export and verify portable backup first.
 
 ---
 
-## 📚 Documentation
+## 🧪 Current Limitations
 
-- [Documentation site — capabilities, setup, guides][docs-url]
-- [Installation, upgrades, TLS, recovery][docs-install]
-- [v0.1.8 release notes][docs-rel-v018]
-- [v0.1.7 release notes][docs-rel-v017]
-- [v0.1.6 release notes][docs-rel-v016]
-- [Architecture and security][docs-arch]
-- [Hardware validation][docs-validate]
-- [Feature parity matrix][docs-parity]
-- [Roadmap][docs-roadmap]
+- Hardware validation: WRT3200ACM, Archer C6 v2 (OpenWrt 25.12.5)
+- Three-or-more-AP fan-out, mesh backhaul, wireless uplink unverified
+- Speed test: controller through Cloudflare (15 MiB, 30s max)
+- No native TLS, cloud remote access, multi-WAN, manual WAN selection
+- Optional LLDP may install official-feed packages
+
+See [hardware validation][docs-validate] and [parity matrix][docs-parity] for details.
 
 ---
 
-## 🧪 Current limitations
-
-- Hardware validation covers Linksys WRT3200ACM and TP-Link Archer C6 v2 on OpenWrt 25.12.5
-- Read-only inspection additionally confirmed on Cudy M3000 v2/MT7981 Filogic
-- Three-or-more-AP fan-out, real mesh backhaul, wireless uplink remain unverified
-- Speed test runs from controller through Cloudflare (15 MiB, 30 seconds max)
-- Native TLS, cloud remote access, multi-WAN, manual WAN selection not in v0.1.8
-- Optional LLDP may install official-feed packages; adoption never installs packages
-
-Detailed hardware evidence and known gaps are in
-[fresh-start validation][docs-validate] and [parity matrix][docs-parity].
-
----
-
-## 🛠️ Build from source
-
-Go 1.26.6 and Node.js 22 are the release toolchain.
+## 🛠️ Build from Source
 
 ```bash
 # Install prerequisites (Debian/Ubuntu)
 ./setup.sh --build
 
-# Or verify toolchain without building
+# Verify toolchain
 make check
 make build
 
@@ -288,14 +228,9 @@ make build
 ./oonfeewrtd -data-dir "$PWD/.run" -listen 127.0.0.1:8080
 ```
 
-oonfeeWRT rejects passphrases supplied through environment variables.
-
 ---
 
-## ❤️ Support development
-
-If oonfeeWRT is useful to you, you can support future development, hands-on
-testing across more OpenWrt hardware, and careful release validation.
+## 🤝 Support Development
 
 [![Buy Me a Coffee][bmac-badge]][bmac-url]
 
@@ -306,35 +241,23 @@ testing across more OpenWrt hardware, and careful release validation.
 
 ## 📄 License
 
-Apache License 2.0. See [LICENSE][license-url], [NOTICE][notice-url], and
-[THIRD_PARTY_LICENSES][third-party-url]. Every release archive and container
-image includes the same notices.
+Apache License 2.0. See [LICENSE][license-url], [NOTICE][notice-url], [THIRD_PARTY_LICENSES][third-party-url].
 
 ---
 
-## 🤖 AI transparency
+## 🤖 AI Transparency
 
-AI coding tools have been used substantially during development to help draft
-and iterate on implementation code, tests, debugging, and documentation. The
-maintainer supplies the product direction, networking architecture, security
-boundaries, hardware knowledge, review, and final decisions, and remains
-responsible for what the project ships.
+AI coding tools have been used substantially during development. CI runs Go tests, `go vet`, race detector, `govulncheck`, UI tests, OSV scans, release smoke tests, and secret scans.
 
-AI output is not treated as evidence that the software is correct or secure.
-CI runs Go tests, `go vet`, the race detector, `govulncheck`, UI unit and browser
-tests, OSV dependency scans, release smoke tests, and repository/history secret
-scans. Hardware behavior is checked separately against physical OpenWrt devices
-and the known coverage gaps are published above.
+Hardware behavior is checked against physical OpenWrt devices. Known coverage gaps are published above.
 
-oonfeeWRT has not received an independent security audit or third-party
-penetration test. It is a new project: start with non-critical hardware, keep
-backups, review every proposed router change, and report unexpected behavior.
+oonfeeWRT has not received an independent security audit or penetration test. Start with non-critical hardware, keep backups, review every proposed router change, and report unexpected behavior.
 
 ---
 
 ## 📬 Support
 
-Report issues on GitHub or reach out via the documentation site.
+Report issues on GitHub. Reach out via the documentation site.
 
 ---
 
@@ -342,11 +265,16 @@ Report issues on GitHub or reach out via the documentation site.
   <img src="docs/public/social-card.svg" alt="oonfeeWRT" width="200" />
 </p>
 
+---
+
+<p align="center">
+  <em>oonfeeWRT is a new project. Start with non-critical hardware, keep backups, review every proposed router change, and report unexpected behavior.</em>
+</p>
+
 [docs-url]: https://aiden0rchad.github.io/oonfeeWRT/
 [docs-install]: https://aiden0rchad.github.io/oonfeeWRT/getting-started/installation/
-[docs-rel-v018]: docs/releases/v0.1.8.md
-[docs-rel-v017]: docs/releases/v0.1.7.md
-[docs-rel-v016]: docs/releases/v0.1.6.md
+[docs-vt]: https://aiden0rchad.github.io/oonfeeWRT/getting-started/visual-tour/
+[docs-rel]: docs/releases/
 [docs-arch]: docs/ARCHITECTURE.md
 [docs-validate]: docs/FRESH-START-VALIDATION.md
 [docs-parity]: docs/PARITY-MATRIX.md
@@ -354,3 +282,4 @@ Report issues on GitHub or reach out via the documentation site.
 [license-url]: LICENSE
 [notice-url]: NOTICE
 [third-party-url]: third_party/THIRD_PARTY_LICENSES
+[release-url]: https://github.com/aiden0rchad/oonfeeWRT/releases
