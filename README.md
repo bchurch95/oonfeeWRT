@@ -255,6 +255,86 @@ oonfeeWRT has not received an independent security audit or penetration test. St
 
 ---
 
+## 🤝 Community
+
+<div align="center">
+  <a href="https://github.com/aiden0rchad/oonfeeWRT/issues"><img src="https://img.shields.io/github/issues/aiden0rchad/oonfeeWRT?style=flat&label=Issues" /></a>
+  <a href="https://github.com/aiden0rchad/oonfeeWRT/pulls"><img src="https://img.shields.io/github/issues-pr/aiden0rchad/oonfeeWRT?style=flat&label=PRs" /></a>
+  <a href="https://github.com/aiden0rchad/oonfeeWRT/stargazers"><img src="https://img.shields.io/github/stars/aiden0rchad/oonfeeWRT?style=flat&label=Stars" /></a>
+  <a href="https://github.com/aiden0rchad/oonfeeWRT/forks"><img src="https://img.shields.io/github/forks/aiden0rchad/oonfeeWRT?style=flat&label=Forks" /></a>
+</div>
+
+---
+
+## 🎯 Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Report issues** — Found a bug? Open an issue with steps to reproduce
+2. **Feature requests** — Suggest new features with clear use cases
+3. **PRs** — Fix bugs, add features, improve docs
+4. **Testing** — Help validate on different hardware
+
+### Development Setup
+
+```bash
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/oonfeeWRT.git
+cd oonfeeWRT
+
+# Install dependencies
+./setup.sh --build
+
+# Run tests
+make test
+
+# Build
+make build
+```
+
+### Code Style
+- Follow existing Go patterns
+- Use descriptive commit messages
+- Add tests for new features
+- Update documentation as needed
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| **Connection refused** | Check router SSH/rpcd/uhttpd services are running |
+| **Adoption fails** | Ensure OpenWrt 21.02+ with required packages |
+| **Configuration fails** | Review Preview carefully before Apply |
+| **Backup restore fails** | Verify backup integrity and version compatibility |
+
+### Getting Help
+
+- Check [troubleshooting][docs-install] in documentation
+- Search [GitHub issues][issues-url]
+- Open a new issue with your setup details
+
+---
+
+## 📋 Version Compatibility
+
+| Controller | OpenWrt | Status |
+|-----------|---------|--------|
+| v0.1.8 | 24.10, 25.12 | ✅ Validated |
+| v0.1.7 | 24.10, 25.12 | ✅ Validated |
+| v0.1.6 | 24.10, 25.12 | ✅ Validated |
+| v0.1.5 | 24.10 | ✅ Validated |
+| v0.1.4 | 24.10 | ✅ Validated |
+| v0.1.3 | 24.10 | ✅ Validated |
+
+**Minimum**: OpenWrt 21.02 (read-only inspection)  
+**Recommended**: OpenWrt 24.10 or 25.12 (full validation)
+
+---
+
 ## 📬 Support
 
 Report issues on GitHub. Reach out via the documentation site.
@@ -279,6 +359,7 @@ Report issues on GitHub. Reach out via the documentation site.
 [docs-validate]: docs/FRESH-START-VALIDATION.md
 [docs-parity]: docs/PARITY-MATRIX.md
 [docs-roadmap]: docs/ROADMAP.md
+[issues-url]: https://github.com/aiden0rchad/oonfeeWRT/issues
 [license-url]: LICENSE
 [notice-url]: NOTICE
 [third-party-url]: third_party/THIRD_PARTY_LICENSES
